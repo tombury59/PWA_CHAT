@@ -1,4 +1,4 @@
-// src/components/PhotoCapture.tsx
+// pwa_chat/src/components/PhotoCapture.tsx
 import React, { useRef, useState } from "react";
 import CameraCapture from "./CameraCapture";
 

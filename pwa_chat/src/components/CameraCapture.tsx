@@ -47,6 +47,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
         }, 1000);
     };
 
+    // Correction dans CameraCapture.tsx
     const captureImage = () => {
         if (videoRef.current && canvasRef.current) {
             setIsFlashing(true);
@@ -60,11 +61,12 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
             if (ctx) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 const dataUrl = canvas.toDataURL("image/png");
-                onCapture(dataUrl); // Enregistre la photo
-                setTimeout(() => onClose(), 300); // Ferme l’interface
+                onCapture(dataUrl);
+                setTimeout(() => onClose(), 0);
             }
         }
     };
+
 
     return (
         <div className="fixed inset-0 bg-[#264653] flex items-center justify-center p-4 z-50">
