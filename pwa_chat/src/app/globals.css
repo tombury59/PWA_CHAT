@@ -1,22 +1,64 @@
 @import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Couleurs de base */
+  --background: #264653;           /* Bleu pétrole profond */
+  --foreground: #F4A261;           /* Orange abricot */
+  --primary: #2A9D8F;              /* Turquoise sarcelle */
+  --secondary: #E9C46A;            /* Jaune sable */
+  --accent: #E76F51;               /* Terracotta */
+
+  /* Variations de fond */
+  --background-light: #2D5464;     /* Version plus claire */
+  --background-dark: #1F3943;      /* Version plus foncée */
+  --surface: #355869;              /* Pour les cards/bulles */
+  --surface-elevated: #3E6478;     /* Surface surélevée */
+
+  /* Variations de couleurs */
+  --primary-light: #3CB4A4;
+  --primary-dark: #238276;
+  --accent-light: #EB8567;
+  --accent-dark: #D35A3E;
+
+  /* Textes */
+  --text-primary: #FFFFFF;
+  --text-secondary: #C8D5DB;
+  --text-muted: #8FA5AE;
+  --text-on-primary: #FFFFFF;
+  --text-on-accent: #FFFFFF;
+
+  /* Bulles de chat */
+  --message-sent: var(--primary);
+  --message-received: var(--surface);
+  --message-system: var(--surface-elevated);
+
+  /* États */
+  --success: #2A9D8F;
+  --error: #E76F51;
+  --warning: #E9C46A;
+  --info: #3CB4A4;
+
+  /* Bordures et séparateurs */
+  --border: rgba(244, 162, 97, 0.15);
+  --divider: rgba(244, 162, 97, 0.1);
+
+  /* Hover et interactions */
+  --hover: rgba(42, 157, 143, 0.1);
+  --active: rgba(42, 157, 143, 0.2);
+  --focus: rgba(244, 162, 97, 0.3);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(53, 88, 105, 0.6);
+  --glass-border: rgba(244, 162, 97, 0.2);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
