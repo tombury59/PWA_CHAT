@@ -1,4 +1,3 @@
-// pwa_chat/src/components/Accueil.tsx
 import React, { useState } from "react";
 import PhotoCapture from "./PhotoCapture";
 

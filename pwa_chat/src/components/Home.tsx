@@ -1,4 +1,3 @@
-// src/components/Home.tsx
 import React from "react";
 
 interface HomeProps {

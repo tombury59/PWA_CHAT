@@ -3,10 +3,10 @@
 :root {
   /* Couleurs de base */
   --background: #264653;
-  --foreground: #F4A261;
-  --primary: #2A9D8F;
-  --secondary: #E9C46A;
-  --accent: #E76F51;
+  --foreground: #c3b6ab;
+  --primary:#2A9D8F;
+  --secondary: #3CB4A4;
+  --accent: #e8dbd7;
 
   /* Variations de fond */
   --background-light: #2D5464;
@@ -17,8 +17,8 @@
   /* Variations de couleurs */
   --primary-light: #3CB4A4;
   --primary-dark: #238276;
-  --accent-light: #EB8567;
-  --accent-dark: #D35A3E;
+  --accent-light: #238276;
+  --accent-dark: #238276;
 
   /* Textes */
   --text-primary: #FFFFFF;
@@ -66,4 +66,33 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.95);}
+  to { opacity: 1; transform: scale(1);}
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease;
+}
+
+
+/* Scrollbar stylée pour ChannelList */
+.flex-col::-webkit-scrollbar {
+  width: 8px;
+  background: var(--background-dark);
+  border-radius: 8px;
+}
+.flex-col::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 8px;
+  border: 2px solid var(--background-dark);
+}
+.flex-col::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-light);
+}
+.flex-col::-webkit-scrollbar-track {
+  background: var(--background-dark);
+  border-radius: 8px;
 }

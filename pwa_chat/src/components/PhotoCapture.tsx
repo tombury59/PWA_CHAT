@@ -3,10 +3,12 @@ import CameraCapture from "./CameraCapture";
 
 interface PhotoCaptureProps {
     onPhotoChange: (photo: string) => void;
+    fileInputRef?: React.RefObject<HTMLInputElement>;
 }
 
-const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange, fileInputRef }) => {
+    const internalRef = useRef<HTMLInputElement>(null);
+    const inputRef = fileInputRef || internalRef;
     const [showCamera, setShowCamera] = useState(false);
 
     const handlePhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,7 +26,6 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
         }
     };
 
-    // Gère la capture et la fermeture du modal
     const handleCameraCapture = (photo: string) => {
         onPhotoChange(photo);
         setShowCamera(false);
@@ -44,7 +45,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
             <div className="flex flex-row gap-2 w-full">
                 <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => inputRef.current?.click()}
                     className="font-bold py-2 px-4 rounded-lg transition flex-1"
                     style={{
                         background: "var(--secondary)",
@@ -54,7 +55,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
                     Sélectionner une photo
                 </button>
                 <input
-                    ref={fileInputRef}
+                    ref={inputRef}
                     type="file"
                     accept="image/*"
                     capture="environment"
@@ -80,6 +81,7 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
                 />
             )}
             <button
+                type="button"
                 onClick={askNotificationPermission}
                 className="font-bold py-2 px-4 rounded-lg transition w-full"
                 style={{

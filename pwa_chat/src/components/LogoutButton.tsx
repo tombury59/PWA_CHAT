@@ -1,21 +1,25 @@
-// pwa_chat/src/components/LogoutButton.tsx
+// pwa_chat/src/components/Logout.tsx
+import { useRouter } from "next/navigation";
 import React from "react";
 
-const LogoutButton: React.FC = () => {
+const Logout: React.FC = () => {
+    const router = useRouter();
+
     const handleLogout = () => {
         localStorage.removeItem("userName");
         localStorage.removeItem("userPhoto");
-        window.location.reload();
+
+        router.replace("/");
     };
 
     return (
         <button
             onClick={handleLogout}
-            className="mt-8 px-6 py-3 rounded-xl font-bold bg-[var(--error)] text-[var(--text-on-accent)] shadow-lg hover:bg-[var(--accent-dark)] transition"
+            className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--background)] font-bold shadow hover:bg-[var(--accent-light)] transition"
         >
-            Se déconnecter
+            Déconnexion
         </button>
     );
 };
 
-export default LogoutButton;
+export default Logout;

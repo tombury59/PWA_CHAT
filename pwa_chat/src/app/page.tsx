@@ -1,37 +1,21 @@
-// src/app/page.tsx
 "use client";
-import { useState, useEffect } from "react";
-import Home from '../components/Home';
-import Accueil from '../components/Accueil';
-import Rooms from '../components/Rooms';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Home from "../components/Home";
 
 export default function HomePage() {
-    const [step, setStep] = useState<"home" | "form" | "rooms">("home");
+    const router = useRouter();
 
     useEffect(() => {
-        // Lecture du localStorage côté client
-        const savedStep = localStorage.getItem("step") as "home" | "form" | "rooms" | null;
+        // Redirige seulement si l'utilisateur est sur la page d'accueil
         const userName = localStorage.getItem("userName");
         const userPhoto = localStorage.getItem("userPhoto");
-        if (savedStep) {
-            setStep(savedStep);
-        } else if (userName && userPhoto) {
-            setStep("rooms");
+        if (userName && userPhoto) {
+            router.replace("/rooms");
         }
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem("step", step);
-    }, [step]);
+    }, [router]);
 
     return (
-        <main
-            className="min-h-screen flex items-center justify-center"
-            style={{ background: "var(--background)" }}
-        >
-            {step === "home" && <Home onStart={() => setStep("form")} />}
-            {step === "form" && <Accueil onFormEnd={() => setStep("rooms")} />}
-            {step === "rooms" && <Rooms />}
-        </main>
+        <Home onStart={() => router.push("/form")} />
     );
 }
