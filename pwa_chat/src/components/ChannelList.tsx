@@ -24,13 +24,25 @@ const ChannelList: React.FC = () => {
                 <div className="text-[var(--text-muted)]">Chargement…</div>
             ) : (
                 <ul className="flex flex-col gap-4 max-h-[350px] overflow-y-auto">
-                    {rooms.slice(0, 6).map(room => (
+                    {rooms.map(room => (
                         <li
                             key={room}
                             className="p-4 rounded-xl bg-[var(--background-light)] shadow hover:bg-[var(--background-dark)] transition cursor-pointer"
+                            style={{ minHeight: "56px", display: "flex", alignItems: "center" }} // Hauteur standardisée
                             onClick={() => router.push(`/rooms/${room}`)}
                         >
-                            <div className="font-semibold text-lg" style={{ color: "var(--accent)" }}># {room}</div>
+                            <div
+                                className="font-semibold text-lg"
+                                style={{
+                                    color: "var(--accent)",
+                                    maxWidth: "400px",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap"
+                                }}
+                            >
+                                # {room}
+                            </div>
                         </li>
                     ))}
                     {rooms.length === 0 && (

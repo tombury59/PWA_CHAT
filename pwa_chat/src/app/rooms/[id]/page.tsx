@@ -1,7 +1,6 @@
-'use client';
+"use client";
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
-import Logout from "../../../components/LogoutButton";
+import { useParams, useRouter } from "next/navigation";
 
 interface Message {
     id: number;
@@ -30,6 +29,7 @@ const mockMessages: Message[] = [
 const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
     const [messages, setMessages] = useState<Message[]>(mockMessages);
     const [input, setInput] = useState("");
+    const router = useRouter();
 
     const handleSend = (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,7 +53,13 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
                 <h2 className="text-2xl font-bold" style={{ color: "var(--accent)" }}>
                     Chat – Salle {roomId}
                 </h2>
-                <Logout />
+                <button
+                    type="button"
+                    onClick={() => router.back()}
+                    className="px-4 py-2 rounded-lg bg-[var(--primary)] text-[var(--accent)] font-bold shadow hover:bg-[var(--primary-light)] transition"
+                >
+                    ← Retour
+                </button>
             </div>
             <div className="flex-1 overflow-y-auto mb-4 bg-[var(--background-light)] rounded-xl p-4 shadow-inner">
                 {messages.map(msg => (

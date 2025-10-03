@@ -1,4 +1,3 @@
-// pwa_chat/src/components/Logout.tsx
 import { useRouter } from "next/navigation";
 import React from "react";
 
@@ -8,7 +7,7 @@ const Logout: React.FC = () => {
     const handleLogout = () => {
         localStorage.removeItem("userName");
         localStorage.removeItem("userPhoto");
-
+        localStorage.removeItem("userGalleryPhotos"); // Ajout pour reset la galerie
         router.replace("/");
     };
 
