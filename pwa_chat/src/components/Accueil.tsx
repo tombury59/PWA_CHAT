@@ -2,9 +2,13 @@
 import React, { useState } from "react";
 import PhotoCapture from "./PhotoCapture";
 
-const Accueil: React.FC = () => {
-    const [nom, setNom] = useState<string>("");
-    const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+interface AccueilProps {
+    onFormEnd?: () => void;
+}
+
+const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
+    const [nom, setNom] = useState<string>(() => localStorage.getItem("userName") || "");
+    const [photoPreview, setPhotoPreview] = useState<string | null>(() => localStorage.getItem("userPhoto"));
 
     const handleNomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNom(e.target.value);
@@ -16,8 +20,16 @@ const Accueil: React.FC = () => {
         localStorage.setItem("userPhoto", photo);
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (nom && photoPreview && onFormEnd) {
+            onFormEnd();
+        }
+    };
+
     return (
-        <div
+        <form
+            onSubmit={handleSubmit}
             className="p-8 rounded-2xl shadow-2xl max-w-md mx-auto mt-12 flex flex-col items-center"
             style={{
                 background: "var(--primary)",
@@ -69,7 +81,14 @@ const Accueil: React.FC = () => {
                 placeholder="Entrez votre nom"
             />
             <PhotoCapture onPhotoChange={handlePhotoChange} />
-        </div>
+            <button
+                type="submit"
+                className="mt-6 px-6 py-3 rounded-xl font-bold bg-[var(--accent)] text-[var(--background)] shadow-lg hover:bg-[var(--accent-light)] transition"
+                disabled={!nom || !photoPreview}
+            >
+                Continuer
+            </button>
+        </form>
     );
 };
 

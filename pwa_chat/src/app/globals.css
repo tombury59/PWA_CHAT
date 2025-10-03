@@ -2,17 +2,17 @@
 @import "tailwindcss";
 :root {
   /* Couleurs de base */
-  --background: #264653;           /* Bleu pétrole profond */
-  --foreground: #F4A261;           /* Orange abricot */
-  --primary: #2A9D8F;              /* Turquoise sarcelle */
-  --secondary: #E9C46A;            /* Jaune sable */
-  --accent: #E76F51;               /* Terracotta */
+  --background: #264653;
+  --foreground: #F4A261;
+  --primary: #2A9D8F;
+  --secondary: #E9C46A;
+  --accent: #E76F51;
 
   /* Variations de fond */
-  --background-light: #2D5464;     /* Version plus claire */
-  --background-dark: #1F3943;      /* Version plus foncée */
-  --surface: #355869;              /* Pour les cards/bulles */
-  --surface-elevated: #3E6478;     /* Surface surélevée */
+  --background-light: #2D5464;
+  --background-dark: #1F3943;
+  --surface: #355869;
+  --surface-elevated: #3E6478;
 
   /* Variations de couleurs */
   --primary-light: #3CB4A4;

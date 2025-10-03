@@ -1,4 +1,3 @@
-// pwa_chat/src/components/PhotoCapture.tsx
 import React, { useRef, useState } from "react";
 import CameraCapture from "./CameraCapture";
 
@@ -22,6 +21,15 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
                 }
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    // Gère la capture et la fermeture du modal
+    const handleCameraCapture = (photo: string) => {
+        onPhotoChange(photo);
+        setShowCamera(false);
+        if (Notification.permission === "granted") {
+            new Notification("Photo prise !");
         }
     };
 
@@ -66,22 +74,10 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange }) => {
                 </button>
             </div>
             {showCamera && (
-                <div
-                    className="fixed inset-0 flex items-center justify-center z-50"
-                    style={{ background: "rgba(33,32,39,0.8)" }}
-                    onClick={() => setShowCamera(false)}
-                >
-                    <div
-                        className="p-6 rounded-2xl shadow-2xl"
-                        style={{ background: "var(--primary)" }}
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <CameraCapture
-                            onCapture={onPhotoChange}
-                            onClose={() => setShowCamera(false)}
-                        />
-                    </div>
-                </div>
+                <CameraCapture
+                    onCapture={handleCameraCapture}
+                    onClose={() => setShowCamera(false)}
+                />
             )}
             <button
                 onClick={askNotificationPermission}
