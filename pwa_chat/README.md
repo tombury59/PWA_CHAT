@@ -27,7 +27,7 @@ Clone le repo :
 
 ```bash
 git clone https://github.com/tombury59/PWA_CHAT.git
-cd PWA_CHAT
+cd PWA_CHAT/pwa_chat
 ```
 Installe les dépendances :
 
