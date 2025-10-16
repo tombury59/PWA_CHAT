@@ -45,6 +45,7 @@ npm run dev
 Dernière avancé:
 - integration de la galerie photo
 - récuperation des channels depuis le serveur
+- !! extension CORS Chrome "Allow CORS: Access-Control-Allow-origin"
 
 A faire:
 - créeation d'un channel => https://api.tools.gavago.fr/socketio/chat/test
