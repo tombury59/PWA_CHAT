@@ -34,6 +34,12 @@ const UserGallery: React.FC = () => {
         setShowCamera(false);
     };
 
+    const handleDeletePhoto = (index: number) => {
+        const newPhotos = photos.filter((_, idx) => idx !== index);
+        setPhotos(newPhotos);
+        localStorage.setItem("userGalleryPhotos", JSON.stringify(newPhotos));
+    };
+
     return (
         <div className="bg-[var(--primary)] rounded-2xl p-6 shadow-xl">
             <div className="flex justify-between items-center mb-6 gap-2">
@@ -69,17 +75,43 @@ const UserGallery: React.FC = () => {
                 />
             )}
             {photos.length === 0 ? (
-                <div className="text-[var(--text-muted)]">Aucune image dans la galerie.</div>
+                <div className="flex flex-col items-center justify-center py-16 px-4">
+                    <div className="w-32 h-32 rounded-full bg-[var(--background-light)] flex items-center justify-center mb-6 shadow-inner">
+                        <svg 
+                            className="w-16 h-16 opacity-30" 
+                            fill="currentColor" 
+                            viewBox="0 0 20 20"
+                            style={{ color: "var(--text-muted)" }}
+                        >
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2" style={{ color: "var(--accent)" }}>
+                        Votre galerie est vide
+                    </h3>
+                    <p className="text-center text-[var(--text-muted)] mb-6 max-w-md">
+                        Commencez à créer des souvenirs ! Ajoutez des photos depuis votre appareil ou prenez-en une directement.
+                    </p>
+                
+                </div>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {photos.map((photo, idx) => (
-                        <img
-                            key={idx}
-                            src={photo}
-                            alt={`Galerie ${idx + 1}`}
-                            className="w-full h-32 object-cover rounded-xl border-2"
-                            style={{ borderColor: "var(--accent)" }}
-                        />
+                        <div key={idx} className="relative group">
+                            <img
+                                src={photo}
+                                alt={`Galerie ${idx + 1}`}
+                                className="w-full h-32 object-cover rounded-xl border-2 shadow-md transition-transform group-hover:scale-105"
+                                style={{ borderColor: "var(--accent)" }}
+                            />
+                            <button
+                                onClick={() => handleDeletePhoto(idx)}
+                                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white font-bold shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
+                                title="Supprimer"
+                            >
+                                ×
+                            </button>
+                        </div>
                     ))}
                 </div>
             )}

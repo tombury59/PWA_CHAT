@@ -8,19 +8,19 @@ import Loader from "../components/Loader";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// Supprime l'export de metadata ici
+// 👇 1. Importer le SocketProvider que vous avez créé
+import { SocketProvider } from "@/contexts/SocketContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
+    // ... (toute votre logique useEffect pour le loader reste ici, sans changement)
     useEffect(() => {
         const handleStart = () => setLoading(true);
         const handleComplete = () => setLoading(false);
-
         const origPush = router.push;
         const origReplace = router.replace;
-
         router.push = (...args) => {
             handleStart();
             return origPush.apply(router, args);
@@ -29,10 +29,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             handleStart();
             return origReplace.apply(router, args);
         };
-
         window.addEventListener("popstate", handleStart);
         window.addEventListener("DOMContentLoaded", handleComplete);
-
         return () => {
             router.push = origPush;
             router.replace = origReplace;
@@ -40,13 +38,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             window.removeEventListener("DOMContentLoaded", handleComplete);
         };
     }, [router]);
-
     useEffect(() => {
         if (loading) {
             const timer = setTimeout(() => setLoading(false), 1000);
             return () => clearTimeout(timer);
         }
     }, [loading]);
+
 
     return (
         <html lang="fr">
@@ -56,9 +54,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <meta name="theme-color" content="#0070f3" />
         </head>
         <body>
-        <ServiceWorkerRegister />
-        {loading && <Loader />}
-        {children}
+            {/* 👇 2. Envelopper {children} avec le SocketProvider */}
+            <SocketProvider>
+                <ServiceWorkerRegister />
+                {loading && <Loader />}
+                {children}
+            </SocketProvider>
         </body>
         </html>
     );
