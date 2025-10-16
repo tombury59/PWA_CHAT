@@ -1,17 +1,16 @@
 // public/service-worker.js
 
-const CACHE_NAME = "pwa-chat-cache";
+const CACHE_NAME = "pwa-chat-cache-v5"; // Increment version again
 const urlsToCache = [
     "/",
     "/manifest.json",
-    "/Logo-192x192.png",
-    "/Logo-512x512.png",
-    "/desktop.png",
-    "/mobile.png",
-    // Ajoute ici d'autres fichiers à mettre en cache
+    "/images/icons/Logo-192x192.png",
+    "/images/icons/Logo-512x512.png",
+    "/images/banners/desktop.png",
+    "/images/banners/mobile.png"
 ];
 
-// Installation : mise en cache initiale
+// ... (install and activate events remain the same) ...
 self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
@@ -19,7 +18,6 @@ self.addEventListener("install", event => {
     self.skipWaiting();
 });
 
-// Activation : nettoyage des anciens caches
 self.addEventListener("activate", event => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -35,28 +33,31 @@ self.addEventListener("activate", event => {
     self.clients.claim();
 });
 
-// Interception des requêtes
+
+// Interception des requêtes (MODIFIED)
 self.addEventListener("fetch", event => {
+    // --- THIS IS THE FIX ---
+    // Only handle requests for http or https schemes.
+    // This will ignore chrome-extension:// requests.
+    if (!event.request.url.startsWith('http')) {
+        return;
+    }
+
+    // We only want to cache GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request).then(response => {
-            // Retourne le cache ou fait une requête réseau
-            return (
-                response ||
-                fetch(event.request)
-                    .then(res => {
-                        // Ajoute la nouvelle ressource au cache
-                        return caches.open(CACHE_NAME).then(cache => {
-                            cache.put(event.request, res.clone());
-                            return res;
-                        });
-                    })
-                    .catch(() => {
-                        // Fallback offline (optionnel)
-                        if (event.request.mode === "navigate") {
-                            return caches.match("/");
-                        }
-                    })
-            );
+            // Return from cache or fetch from network
+            return response || fetch(event.request).then(res => {
+                // Add the new resource to the cache
+                return caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, res.clone());
+                    return res;
+                });
+            });
         })
     );
 });

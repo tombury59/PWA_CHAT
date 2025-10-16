@@ -27,24 +27,54 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // On se connecte au serveur
-    const socketInstance = io(SOCKET_URL);
-
-    socketInstance.on("connect", () => {
-      console.log("Socket.IO connecté !");
-      setIsConnected(true);
-    });
-
-    socketInstance.on("disconnect", () => {
-      console.log("Socket.IO déconnecté.");
-      setIsConnected(false);
+    // On initialise le socket sans le connecter automatiquement
+    const socketInstance = io(SOCKET_URL, {
+      autoConnect: false
     });
 
     setSocket(socketInstance);
 
-    // On se déconnecte quand le composant est retiré
+    // Fonction pour gérer la connexion
+    const handleConnect = () => {
+      console.log("Socket.IO connecté !");
+      setIsConnected(true);
+    };
+
+    // Fonction pour gérer la déconnexion
+    const handleDisconnect = () => {
+      console.log("Socket.IO déconnecté.");
+      setIsConnected(false);
+    };
+
+    socketInstance.on("connect", handleConnect);
+    socketInstance.on("disconnect", handleDisconnect);
+
+    // Gérer les changements d'état du réseau
+    const handleOnline = () => {
+      console.log("Le navigateur est en ligne. Tentative de connexion...");
+      socketInstance.connect();
+    };
+
+    const handleOffline = () => {
+      console.log("Le navigateur est hors ligne. Déconnexion.");
+      socketInstance.disconnect();
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // On tente une première connexion si le navigateur est déjà en ligne
+    if (navigator.onLine) {
+      handleOnline();
+    }
+
+    // On se déconnecte et on nettoie les écouteurs quand le composant est retiré
     return () => {
       socketInstance.disconnect();
+      socketInstance.off("connect", handleConnect);
+      socketInstance.off("disconnect", handleDisconnect);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
