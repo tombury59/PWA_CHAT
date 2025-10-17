@@ -2,7 +2,10 @@ import withPWA from "next-pwa";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    // autres options Next.js ici
+    output: 'standalone',
+    env: {
+        SOCKET_URL: process.env.SOCKET_URL || 'https://api.tools.gavago.fr',
+    },
 };
 
 export default withPWA({
@@ -11,5 +14,6 @@ export default withPWA({
         dest: "public",
         register: true,
         skipWaiting: true,
+        disable: process.env.NODE_ENV === 'development'
     },
 });
