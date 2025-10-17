@@ -8,7 +8,6 @@ import Loader from "../components/Loader";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-// 👇 1. Importer le SocketProvider que vous avez créé
 import { SocketProvider } from "@/contexts/SocketContext";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
