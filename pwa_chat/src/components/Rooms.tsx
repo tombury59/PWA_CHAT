@@ -1,21 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import ChannelList from "./ChannelList";
 import UserGallery from "./UserGallery";
 import Logout from "@/components/LogoutButton";
+import { useUser } from "@/app/hooks/useUser";
+import ProfileImage from "./ProfileImage";
 
 const Rooms: React.FC = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const [user, setUser] = useState({
-        name: "Moi",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Moi"
-    });
-
-    useEffect(() => {
-        // Exécuté uniquement côté client
-        const name = localStorage.getItem("userName") || "Moi";
-        const avatar = localStorage.getItem("userPhoto") || "https://api.dicebear.com/7.x/avataaars/svg?seed=Moi";
-        setUser({ name, avatar });
-    }, []);
+    const { name, photo } = useUser();
+    
+    const user = {
+        name: name || "Moi",
+        avatar: photo || "https://api.dicebear.com/7.x/avataaars/svg?seed=Moi"
+    };
 
     return (
         <div className="min-h-screen bg-[var(--background)] p-8">
@@ -30,7 +27,7 @@ const Rooms: React.FC = () => {
                         onClick={() => setShowProfileMenu(!showProfileMenu)}
                         className="flex items-center gap-2 bg-[var(--primary)] border-2 border-[var(--accent)] rounded-full px-4 py-2 cursor-pointer transition"
                     >
-                        <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2" style={{ borderColor: "var(--accent)" }} />
+                        <ProfileImage src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full border-2" style={{ borderColor: "var(--accent)" }} />
                         <span className="font-semibold text-[var(--accent)]">{user.name}</span>
                         <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
