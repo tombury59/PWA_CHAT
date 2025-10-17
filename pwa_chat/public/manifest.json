@@ -1,10 +1,12 @@
 {
-  "name": "Chat Client",
+  "name": "PWA Chat",
   "short_name": "Chat",
+  "description": "Application de chat en temps réel",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "scope": "/",
   "icons": [
     {
       "src": "/images/icons/Logo-192x192.png",

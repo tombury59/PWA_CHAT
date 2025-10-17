@@ -8,7 +8,12 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
-  const pseudo = typeof window !== "undefined" ? localStorage.getItem("userName") || "Anonyme" : "Anonyme";
+    const [pseudo, setPseudo] = useState("Anonyme");
+  
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setPseudo(localStorage.getItem("userName") || "Anonyme");
+  }, []);
 
   // hooks personnalisés
   const { messages, sendMessage } = useChat(roomId, pseudo);
