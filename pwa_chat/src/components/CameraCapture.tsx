@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
+import { compressImage } from "../utils/imageUtils";
 
 interface CameraCaptureProps {
     onCapture: (photo: string) => void;
@@ -55,7 +56,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
         }, 1000);
     };
 
-    const captureImage = () => {
+    const captureImage = async () => {
         if (videoRef.current && canvasRef.current) {
             setIsFlashing(true);
             setTimeout(() => setIsFlashing(false), 200);
@@ -67,8 +68,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
             const ctx = canvas.getContext("2d");
             if (ctx) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL("image/png");
-                setCapturedPhoto(dataUrl); // Stocke la photo dans l'état
+                const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+                const compressed = await compressImage(dataUrl);
+                setCapturedPhoto(compressed); // Stocke la photo compressée dans l'état
             }
         }
     };

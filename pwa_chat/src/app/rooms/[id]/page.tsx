@@ -3,17 +3,13 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useChat } from "../../hooks/useChat";
 import { useRoomStatus } from "../../hooks/useRoomStatus";
+import { useUser } from "../../hooks/useUser";
 
 const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
-    const [pseudo, setPseudo] = useState("Anonyme");
-  
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setPseudo(localStorage.getItem("userName") || "Anonyme");
-  }, []);
+    const { name: pseudo } = useUser();
 
   // hooks personnalisés
   const { messages, sendMessage } = useChat(roomId, pseudo);

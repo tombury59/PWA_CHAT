@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import CameraCapture from "./CameraCapture";
+import { compressImage } from "../utils/imageUtils";
 
 interface PhotoCaptureProps {
     onPhotoChange: (photo: string) => void;
@@ -11,13 +12,14 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ onPhotoChange, fileInputRef
     const inputRef = fileInputRef || internalRef;
     const [showCamera, setShowCamera] = useState(false);
 
-    const handlePhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = () => {
+            reader.onload = async () => {
                 const result = reader.result as string;
-                onPhotoChange(result);
+                const compressed = await compressImage(result);
+                onPhotoChange(compressed);
                 if (Notification.permission === "granted") {
                     new Notification("Photo prise !");
                 }
