@@ -5,6 +5,23 @@ const nextConfig: NextConfig = {
     env: {
         SOCKET_URL: process.env.SOCKET_URL || 'https://api.tools.gavago.fr',
     },
+    images: {
+        domains: ['api.dicebear.com'],
+        unoptimized: true
+    },
+    async headers() {
+        return [
+            {
+                source: '/manifest.json',
+                headers: [
+                    {
+                        key: 'Access-Control-Allow-Origin',
+                        value: '*'
+                    }
+                ]
+            }
+        ];
+    }
 };
 
 const withPWAConfig = withPWA({
@@ -12,7 +29,7 @@ const withPWAConfig = withPWA({
     register: true,
     skipWaiting: true,
     disable: process.env.NODE_ENV === 'development',
-    swSrc: './public/worker.js',
+    buildExcludes: [/chunks\/.*$/],
     runtimeCaching: [
             {
                 urlPattern: /^https:\/\/api\.tools\.gavago\.fr\/.*$/,

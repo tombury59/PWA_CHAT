@@ -9,43 +9,58 @@ interface ProfileImageProps {
 }
 
 const ProfileImage: React.FC<ProfileImageProps> = ({ src, alt, className, style }) => {
-    // Si c'est une URL data, on crée un blob pour l'optimiser
-    const [blobUrl, setBlobUrl] = React.useState<string | null>(null);
+    const [imageSrc, setImageSrc] = React.useState<string>(src);
+    const [error, setError] = React.useState(false);
 
     React.useEffect(() => {
-        if (src.startsWith('data:')) {
-            // Convertir base64 en Blob
-            fetch(src)
-                .then(res => res.blob())
-                .then(blob => {
+        const processImage = async () => {
+            if (src.startsWith('data:')) {
+                try {
+                    const response = await fetch('/api/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ imageData: src }),
+                    });
+
+                    if (!response.ok) throw new Error('Failed to process image');
+
+                    const blob = await response.blob();
                     const url = URL.createObjectURL(blob);
-                    setBlobUrl(url);
+                    setImageSrc(url);
+                    
                     return () => URL.revokeObjectURL(url);
-                })
-                .catch(console.error);
-        }
+                } catch (err) {
+                    console.error('Error processing image:', err);
+                    setError(true);
+                }
+            }
+        };
+
+        processImage();
     }, [src]);
 
-    if (!src) {
-        return null;
+    if (!src || error) {
+        return (
+            <div className={className} style={{ ...style, backgroundColor: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                👤
+            </div>
+        );
     }
 
-    // Si c'est une URL data et qu'on a un blob, utiliser le blob
-    const imageSrc = blobUrl || src;
-
-    // Si c'est un blob ou une URL data, utiliser une img classique
-    if (blobUrl || src.startsWith('data:')) {
+    if (imageSrc.startsWith('data:') || imageSrc.startsWith('blob:')) {
         return (
             <img
                 src={imageSrc}
                 alt={alt}
                 className={className}
                 style={style}
+                onError={() => setError(true)}
             />
         );
     }
 
-    // Sinon utiliser Next/Image pour les URLs externes
     return (
         <Image
             src={imageSrc}
@@ -54,6 +69,7 @@ const ProfileImage: React.FC<ProfileImageProps> = ({ src, alt, className, style 
             height={64}
             className={className}
             style={style}
+            onError={() => setError(true)}
         />
     );
 };

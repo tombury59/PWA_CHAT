@@ -49,9 +49,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="fr">
         <head>
-            <link rel="manifest" href="/manifest.json" />
+            <link rel="manifest" href="/manifest.json" crossOrigin="use-credentials" />
             <link rel="icon" href="/images/icons/Logo-192x192.png" sizes="192x192" type="image/png" />
             <meta name="theme-color" content="#0070f3" />
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+            <meta name="description" content="Application de chat en temps réel" />
+            <link rel="apple-touch-icon" href="/images/icons/Logo-192x192.png" />
         </head>
         <body>
             {/* 👇 2. Envelopper {children} avec le SocketProvider */}
