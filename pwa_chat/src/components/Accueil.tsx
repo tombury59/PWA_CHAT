@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import PhotoCapture from "./PhotoCapture";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface AccueilProps {
     onFormEnd?: () => void;
 }
 
 const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
-    const [nom, setNom] = useState<string>(() => localStorage.getItem("userName") || "");
-    const [photoPreview, setPhotoPreview] = useState<string | null>(() => localStorage.getItem("userPhoto"));
+    const [nom, setNom] = useLocalStorage("userName", "");
+    const [photoPreview, setPhotoPreview] = useLocalStorage("userPhoto", null);
 
     const handleNomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNom(e.target.value);
-        localStorage.setItem("userName", e.target.value);
     };
 
     const handlePhotoChange = (photo: string) => {
         setPhotoPreview(photo);
-        localStorage.setItem("userPhoto", photo);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -26,6 +26,7 @@ const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
         }
     };
 
+    // Reste du JSX inchangé...
     return (
         <form
             onSubmit={handleSubmit}
