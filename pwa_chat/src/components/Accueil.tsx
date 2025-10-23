@@ -8,8 +8,8 @@ interface AccueilProps {
 }
 
 const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
-    const [nom, setNom] = useLocalStorage("userName", "");
-    const [photoPreview, setPhotoPreview] = useLocalStorage("userPhoto", null);
+    const [nom, setNom] = useLocalStorage<string>("userName", "");
+    const [photoPreview, setPhotoPreview] = useLocalStorage<string | null>("userPhoto", null);
 
     const handleNomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNom(e.target.value);
@@ -26,7 +26,6 @@ const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
         }
     };
 
-    // Reste du JSX inchangé...
     return (
         <form
             onSubmit={handleSubmit}
@@ -36,57 +35,24 @@ const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
                 color: "var(--foreground)"
             }}
         >
-            {photoPreview ? (
-                <img
-                    src={photoPreview}
-                    alt="Photo de profil"
-                    className="w-32 h-32 rounded-3xl object-cover border-4 shadow mb-6"
-                    style={{
-                        borderColor: "var(--accent)"
-                    }}
+            <h1 className="text-3xl font-bold mb-6">Bienvenue</h1>
+            <div className="w-full mb-6">
+                <input
+                    type="text"
+                    value={nom}
+                    onChange={handleNomChange}
+                    placeholder="Votre nom"
+                    className="w-full p-2 rounded border"
+                    required
                 />
-            ) : (
-                <div
-                    className="w-32 h-32 rounded-full flex items-center justify-center mb-6 text-4xl"
-                    style={{
-                        background: "var(--background)",
-                        color: "var(--accent)"
-                    }}
-                >
-                    <span>👤</span>
-                </div>
-            )}
-            <h1
-                className="text-3xl font-extrabold mb-6"
-                style={{ color: "var(--accent)" }}
-            >
-                Bienvenue !
-            </h1>
-            <label
-                className="block mb-2 font-bold"
-                style={{ color: "var(--accent)" }}
-            >
-                Votre nom :
-            </label>
-            <input
-                type="text"
-                value={nom}
-                onChange={handleNomChange}
-                className="border-none p-3 rounded-lg mb-6 w-full focus:outline-none focus:ring-2 transition"
-                style={{
-                    background: "var(--background)",
-                    color: "var(--foreground)",
-                    boxShadow: "0 0 0 2px var(--accent)"
-                }}
-                placeholder="Entrez votre nom"
-            />
-            <PhotoCapture onPhotoChange={handlePhotoChange} />
+            </div>
+            <PhotoCapture onPhotoCapture={handlePhotoChange} photoPreview={photoPreview} />
             <button
                 type="submit"
-                className="mt-6 px-6 py-3 rounded-xl font-bold bg-[var(--accent)] text-[var(--background)] shadow-lg hover:bg-[var(--accent-light)] transition"
+                className="mt-6 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 disabled={!nom || !photoPreview}
             >
-                Continuer
+                Commencer
             </button>
         </form>
     );
