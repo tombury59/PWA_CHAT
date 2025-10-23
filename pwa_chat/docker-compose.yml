@@ -1,10 +1,33 @@
 version: '3'
+
+networks:
+  traefik-public:
+    external: true
+
 services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    networks:
+      - traefik-public
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pwa-chat.rule=Host(`pwa-chat.localhost`)"
+      - "traefik.http.services.pwa-chat.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik-public"
+    networks:
+      - traefik-public
