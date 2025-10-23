@@ -1,13 +1,23 @@
+// pwa_chat/src/app/hooks/useRoomStatus.ts
 import { useEffect, useState } from "react";
-import { useSocket } from "@/contexts/SocketContext"; // Adaptez le chemin
+import { useSocket } from "@/contexts/SocketContext";
 
-// Le serveur envoie un objet, donc on définit son type
-interface Clients {
-  [id: string]: {
-    pseudo: string;
-    // Ajoutez d'autres propriétés si le serveur en envoie
-  };
+interface ClientInfo {
+  pseudo: string | { username: string; photo: string | null };
+  roomName: string;
+  [key: string]: any;
 }
+
+interface Clients {
+  [id: string]: ClientInfo;
+}
+
+const normalizePseudo = (p: any): string => {
+  if (!p) return "inconnu";
+  if (typeof p === "string") return p;
+  if (typeof p === "object" && p.username) return p.username;
+  return "inconnu";
+};
 
 export const useRoomStatus = () => {
   const { socket } = useSocket();
@@ -16,15 +26,20 @@ export const useRoomStatus = () => {
   useEffect(() => {
     if (!socket) return;
 
-    // Se déclenche quand on rejoint une salle ou quand qqn d'autre rejoint
     const handleRoomJoined = (data: { clients: Clients }) => {
-      setClients(data.clients);
+      const normalizedClients: Clients = {};
+      Object.entries(data.clients).forEach(([id, client]) => {
+        normalizedClients[id] = {
+          ...client,
+          pseudo: normalizePseudo(client.pseudo)
+        };
+      });
+      setClients(normalizedClients);
     };
 
-    // Se déclenche quand un utilisateur se déconnecte
     const handleUserDisconnected = (data: { id: string }) => {
-      setClients((currentClients) => {
-        const newClients = { ...currentClients };
+      setClients(current => {
+        const newClients = { ...current };
         delete newClients[data.id];
         return newClients;
       });
@@ -39,8 +54,7 @@ export const useRoomStatus = () => {
     };
   }, [socket]);
 
-  // On retourne la liste des clients sous forme de tableau simple pour l'affichage
-  const clientList = Object.values(clients).map(client => client.pseudo);
+  const clientList = Object.values(clients).map(client => normalizePseudo(client.pseudo));
 
   return { clientList };
 };
