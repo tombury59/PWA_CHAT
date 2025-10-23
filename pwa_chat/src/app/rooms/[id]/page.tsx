@@ -1,9 +1,20 @@
-// pwa_chat/src/app/rooms/[id]/page.tsx
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useChat } from "../../hooks/useChat";
 import { useRoomStatus } from "../../hooks/useRoomStatus";
+
+const decodeRoomName = (encodedName: string): string => {
+  try {
+    return decodeURIComponent(
+        decodeURIComponent(
+            encodedName.replace(/\+/g, ' ')
+        )
+    );
+  } catch {
+    return encodedName;
+  }
+};
 
 const normalizePseudo = (p: any): string => {
   if (!p) return "Anonyme";
@@ -14,11 +25,26 @@ const normalizePseudo = (p: any): string => {
   return String(p);
 };
 
+const formatInfoMessage = (content: string): string => {
+  const matches = content.match(/(.*?) \(id:.*?\) a rejoint la room (.*?) de \d+ client\(s\)/);
+  if (!matches) return content;
+
+  const [, pseudo, roomName] = matches;
+  const decodedRoomName = decodeRoomName(roomName);
+  const truncatedRoomName = decodedRoomName.length > 50
+      ? `${decodedRoomName.substring(0, 47)}...`
+      : decodedRoomName;
+
+  return `${pseudo} a rejoint la room ${truncatedRoomName}`;
+};
+
 const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
+  const [showTooltip, setShowTooltip] = useState(false);
   const pseudo = typeof window !== "undefined" ? localStorage.getItem("userName") || "Anonyme" : "Anonyme";
+  const decodedRoomId = decodeRoomName(roomId);
 
   const { messages, sendMessage } = useChat(roomId, pseudo);
   const { clientList } = useRoomStatus();
@@ -35,12 +61,22 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
 
   return (
       <div className="max-w-5xl mx-auto mt-8 p-4 sm:p-6 rounded-2xl shadow-2xl bg-[var(--primary)] text-[var(--foreground)] flex flex-col md:flex-row gap-4 h-auto md:h-[70vh]">
-        {/* Colonne principale - Chat */}
         <div className="flex-1 flex flex-col min-h-[50vh] md:min-h-0">
-          {/* En-tête */}
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold" style={{ color: "var(--accent)" }}>
-              Chat – Salle {roomId}
+          <div className="flex justify-between items-center mb-4 relative">
+            <h2
+                className="text-2xl font-bold truncate max-w-[60%]"
+                style={{ color: "var(--accent)" }}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+            >
+              Chat – Salle {decodedRoomId.length > 30
+                ? `${decodedRoomId.substring(0, 27)}...`
+                : decodedRoomId}
+              {showTooltip && decodedRoomId.length > 30 && (
+                  <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-black/80 text-white text-sm rounded-lg z-50 max-w-[300px] break-words whitespace-normal">
+                    {decodedRoomId}
+                  </div>
+              )}
             </h2>
             <button
                 onClick={() => router.back()}
@@ -50,7 +86,6 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
             </button>
           </div>
 
-          {/* Zone des messages */}
           <div className="flex-1 overflow-y-auto mb-4 bg-[var(--background-light)] rounded-xl p-4 shadow-inner">
             {messages.map((msg, index) => (
                 <div
@@ -60,19 +95,22 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
                     }`}
                 >
                   {msg.categorie === "INFO" ? (
-                      <div className="w-full text-center text-sm text-[var(--text-muted)] italic my-2">
-                        {msg.content}
+                      <div
+                          className="w-full text-center text-sm text-[var(--text-muted)] italic my-2 hover:cursor-help"
+                          title={msg.content}
+                      >
+                        {formatInfoMessage(msg.content)}
                       </div>
                   ) : (
                       <div
-                          className={`px-4 py-2 rounded-2xl shadow max-w-sm ${
+                          className={`px-4 py-2 rounded-2xl shadow max-w-[90%] sm:max-w-sm break-words ${
                               normalizePseudo(msg.pseudo) === pseudo
                                   ? "bg-[var(--message-sent)] text-[var(--text-on-primary)]"
                                   : "bg-[var(--message-received)] text-[var(--foreground)]"
                           }`}
                       >
                         <div className="text-sm font-bold">{normalizePseudo(msg.pseudo)}</div>
-                        <div>{msg.content}</div>
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
                         <div className="text-xs text-[var(--text-muted)] text-right mt-1">
                           {new Date(msg.dateEmis).toLocaleTimeString([], {
                             hour: "2-digit",
@@ -86,7 +124,6 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Zone d'envoi de message */}
           <div className="flex flex-col sm:flex-row gap-2">
             <input
                 type="text"
@@ -110,7 +147,6 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
           </div>
         </div>
 
-        {/* Colonne latérale - Utilisateurs présents */}
         <div className="w-full md:w-64 bg-[var(--background-light)] rounded-xl p-4 shadow-inner flex flex-col">
           <h3 className="text-lg font-bold mb-3 pb-2 border-b border-[var(--accent)]" style={{ color: "var(--accent)" }}>
             En ligne ({clientList.length})
