@@ -22,7 +22,7 @@ services:
 
       # Dashboard
       - '--api.dashboard=false'
-      - '--api.insecure=true' # pas exposé en HTTP non sécurisé
+      - '--api.insecure=false' # Ne pas exposer l'API en HTTP non sécurisé
 
       # Logs
       - '--log.level=INFO'
@@ -33,7 +33,7 @@ services:
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/acme:/acme
+      - traefik:/acme
 
     networks:
       - public
@@ -45,10 +45,15 @@ services:
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.api.rule=Host(`tom.bury.angers.mds-project.fr`)'
-      - 'traefik.http.routers.api.entrypoints=web,websecure'
+      - 'traefik.http.routers.api.entrypoints=websecure'
       - 'traefik.http.routers.api.tls=true'
       - 'traefik.http.routers.api.tls.certresolver=http_resolver'
       - 'traefik.http.services.api.loadbalancer.server.port=3000'
+      # Redirect HTTP -> HTTPS
+      - 'traefik.http.routers.api-redirect.rule=Host(`tom.bury.angers.mds-project.fr`)'
+      - 'traefik.http.routers.api-redirect.entrypoints=web'
+      - 'traefik.http.routers.api-redirect.middlewares=redirect-to-https'
+      - 'traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https'
     networks:
       - public
 
@@ -56,3 +61,7 @@ networks:
   public:
     driver: bridge
     attachable: true
+
+volumes:
+  traefik_acme:
+    driver: local
