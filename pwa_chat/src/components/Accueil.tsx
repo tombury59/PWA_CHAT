@@ -1,21 +1,22 @@
+// TypeScript
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import PhotoCapture from "./PhotoCapture";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 interface AccueilProps {
     onFormEnd?: () => void;
 }
 
 const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
-    const [nom, setNom] = useLocalStorage<string>("userName", "");
+    const [nom, setNom] = useLocalStorage<string | null>("userName", null);
     const [photoPreview, setPhotoPreview] = useLocalStorage<string | null>("userPhoto", null);
 
     const handleNomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNom(e.target.value);
     };
 
-    const handlePhotoChange = (photo: string) => {
+    const handlePhotoChange = (photo: string | null) => {
         setPhotoPreview(photo);
     };
 
@@ -39,7 +40,7 @@ const Accueil: React.FC<AccueilProps> = ({ onFormEnd }) => {
             <div className="w-full mb-6">
                 <input
                     type="text"
-                    value={nom}
+                    value={nom ?? ""}
                     onChange={handleNomChange}
                     placeholder="Votre nom"
                     className="w-full p-2 rounded border"
