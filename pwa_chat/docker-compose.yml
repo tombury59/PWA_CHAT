@@ -61,7 +61,3 @@ networks:
   public:
     driver: bridge
     attachable: true
-
-volumes:
-  traefik_acme:
-    driver: local
