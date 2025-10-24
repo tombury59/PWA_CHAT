@@ -20,12 +20,23 @@ services:
       - '--certificatesresolvers.myresolver.acme.email=tombury59@hotmail.com'
       - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
       - '--log.level=INFO'
+      - '--accesslog=true'
+      - '--api.dashboard=true'
+      - '--api.insecure=false'
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt:/letsencrypt
+      - ./letsencrypt:/letsencrypt
+    labels:
+      - "traefik.enable=true"
+      # Dashboard (optionnel, pour debug)
+      - "traefik.http.routers.traefik.rule=Host(`traefik.tom.bury.angers.mds-project.fr`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.service=api@internal"
     networks:
       - public
 
@@ -37,10 +48,23 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=public"
+
+      # Configuration HTTP -> HTTPS redirect
+      - "traefik.http.routers.app.rule=Host(`tom.bury.angers.mds-project.fr`)"
+      - "traefik.http.routers.app.entrypoints=web"
+      - "traefik.http.routers.app.middlewares=redirect-to-https"
+
+      # Configuration HTTPS
       - "traefik.http.routers.app-secure.rule=Host(`tom.bury.angers.mds-project.fr`)"
       - "traefik.http.routers.app-secure.entrypoints=websecure"
       - "traefik.http.routers.app-secure.tls=true"
       - "traefik.http.routers.app-secure.tls.certresolver=myresolver"
+
+      # Middleware de redirection
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
+
+      # Service
       - "traefik.http.services.app.loadbalancer.server.port=3000"
     networks:
       - public
@@ -52,4 +76,3 @@ networks:
 
 volumes:
   letsencrypt:
-    name: traefik_letsencrypt
