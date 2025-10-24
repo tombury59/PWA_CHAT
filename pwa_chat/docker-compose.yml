@@ -2,41 +2,42 @@ version: "3.8"
 
 services:
   traefik:
-    image: traefik:v2.10
-    container_name: traefik
+    image: traefik:v3.4
     restart: always
-    security_opt:
-      - no-new-privileges:true
+
     command:
-      - '--global.sendAnonymousUsage=false'
+      # Docker provider
       - '--providers.docker=true'
       - '--providers.docker.exposedbydefault=false'
+
+      # Entrypoints
       - '--entrypoints.web.address=:80'
-      - '--entrypoints.web.http.redirections.entryPoint.to=websecure'
-      - '--entrypoints.web.http.redirections.entryPoint.scheme=https'
       - '--entrypoints.websecure.address=:443'
-      - '--certificatesresolvers.myresolver.acme.httpchallenge=true'
-      - '--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web'
-      - '--certificatesresolvers.myresolver.acme.email=tombury59@hotmail.com'
-      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
+
+      # ACME HTTP Challenge
+      - '--certificatesresolvers.http_resolver.acme.email=${ACME_EMAIL}'
+      - '--certificatesresolvers.http_resolver.acme.storage=/acme/acme.json'
+      - '--certificatesresolvers.http_resolver.acme.httpchallenge=true'
+      - '--certificatesresolvers.http_resolver.acme.httpchallenge.entrypoint=web'
+
+      # Dashboard
+      - '--api.dashboard=false'
+      - '--api.insecure=false' # pas exposé en HTTP non sécurisé
+
+      # Logs
       - '--log.level=INFO'
-      - '--accesslog=true'
-      - '--api.dashboard=true'
-      - '--api.insecure=false'
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
-    labels:
-      - "traefik.enable=true"
-      # Dashboard (optionnel, pour debug)
-      - "traefik.http.routers.traefik.rule=Host(`traefik.tom.bury.angers.mds-project.fr`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
-      - "traefik.http.routers.traefik.service=api@internal"
+      - ./acme:/acme
+
+    environment:
+      - ACME_EMAIL=${ACME_EMAIL}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+
     networks:
       - public
 
@@ -46,33 +47,16 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=public"
-
-      # Configuration HTTP -> HTTPS redirect
-      - "traefik.http.routers.app.rule=Host(`tom.bury.angers.mds-project.fr`)"
-      - "traefik.http.routers.app.entrypoints=web"
-      - "traefik.http.routers.app.middlewares=redirect-to-https"
-
-      # Configuration HTTPS
-      - "traefik.http.routers.app-secure.rule=Host(`tom.bury.angers.mds-project.fr`)"
-      - "traefik.http.routers.app-secure.entrypoints=websecure"
-      - "traefik.http.routers.app-secure.tls=true"
-      - "traefik.http.routers.app-secure.tls.certresolver=myresolver"
-
-      # Middleware de redirection
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true"
-
-      # Service
-      - "traefik.http.services.app.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api.rule=Host(`${DOMAIN_NAME}`)'
+      - 'traefik.http.routers.api.entrypoints=web,websecure'
+      - 'traefik.http.routers.api.tls=true'
+      - 'traefik.http.routers.api.tls.certresolver=http_resolver'
+      # - "traefik.http.services.api.loadbalancer.server.port=8080"
     networks:
       - public
 
 networks:
   public:
-    name: public
     driver: bridge
-
-volumes:
-  letsencrypt:
+    attachable: true
