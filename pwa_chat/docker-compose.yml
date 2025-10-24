@@ -46,6 +46,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    ports:
+      - 3000
     labels:
       - 'traefik.enable=true'
       - 'traefik.http.routers.api.rule=Host(`${DOMAIN_NAME}`)'
