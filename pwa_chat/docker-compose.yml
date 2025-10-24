@@ -1,41 +1,62 @@
 version: "3.8"
 
-networks:
-  traefik-public:
-    external: true
-
 services:
   traefik:
-    image: traefik:v2.10
+    image: traefik:v3.4
+    container_name: traefik
+    restart: always
     command:
-      - "--configFile=/etc/traefik/traefik.yml"
+      # Docker provider
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+
+      # Entrypoints
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.websecure.address=:443'
+
+      # ACME HTTP Challenge
+      - '--certificatesresolvers.http_resolver.acme.email=${ACME_EMAIL}'
+      - '--certificatesresolvers.http_resolver.acme.storage=/acme/acme.json'
+      - '--certificatesresolvers.http_resolver.acme.httpchallenge=true'
+      - '--certificatesresolvers.http_resolver.acme.httpchallenge.entrypoint=web'
+
+      # Dashboard
+      - '--api.dashboard=true'
+      - '--api.insecure=false' # pas exposé en HTTP non sécurisé
+
+      # Logs
+      - '--log.level=INFO'
+
     ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - traefik-public
+      - '80:80'
+      - '443:443'
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/acme.json:/acme.json
-    labels:
-      - "traefik.enable=true"
+      - ./acme:/acme
+
+    environment:
+      - ACME_EMAIL="tombury59@hotmail.com"
+      - DOMAIN_NAME="tom.bury.angers.mds-project.fr"
+
+    networks:
+      - public
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
     labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-public"
-      - "traefik.http.routers.pwa-chat-http.rule=Host(`tom.bury.angers.mds-project.fr`)" # remplacer par ton domaine
-      - "traefik.http.routers.pwa-chat-http.entrypoints=web"
-      - "traefik.http.routers.pwa-chat-http.middlewares=redirect-to-https@docker"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.pwa-chat.rule=Host(`tom.bury.angers.mds-project.fr`)" # remplacer par ton domaine
-      - "traefik.http.routers.pwa-chat.entrypoints=websecure"
-      - "traefik.http.routers.pwa-chat.tls=true"
-      - "traefik.http.routers.pwa-chat.tls.certresolver=http"
-      - "traefik.http.services.pwa-chat.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api.rule=Host(`tom.bury.angers.mds-project.fr`)'
+      - 'traefik.http.routers.api.entrypoints=web,websecure'
+      - 'traefik.http.routers.api.tls=true'
+      - 'traefik.http.routers.api.tls.certresolver=http_resolver'
+      # - "traefik.http.services.api.loadbalancer.server.port=8080"
     networks:
-      - traefik-public
+      - public
+
+networks:
+  public:
+    driver: bridge
+    attachable: true
