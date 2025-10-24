@@ -15,7 +15,7 @@ services:
       - '--entrypoints.websecure.address=:443'
 
       # ACME HTTP Challenge
-      - '--certificatesresolvers.http_resolver.acme.email=${ACME_EMAIL}'
+      - '--certificatesresolvers.http_resolver.acme.email="tombury59@hotmail.com"'
       - '--certificatesresolvers.http_resolver.acme.storage=/acme/acme.json'
       - '--certificatesresolvers.http_resolver.acme.httpchallenge=true'
       - '--certificatesresolvers.http_resolver.acme.httpchallenge.entrypoint=web'
