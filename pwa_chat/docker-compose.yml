@@ -1,4 +1,4 @@
-version: '3'
+version: "3.8"
 
 networks:
   traefik-public:
@@ -8,15 +8,16 @@ services:
   traefik:
     image: traefik:v2.10
     command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+      - "--configFile=/etc/traefik/traefik.yml"
     ports:
+      - "80:80"
       - "443:443"
     networks:
       - traefik-public
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/acme.json
     labels:
       - "traefik.enable=true"
 
@@ -26,8 +27,15 @@ services:
       dockerfile: Dockerfile
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pwa-chat.rule=Host(`tom.bury.angers.mds-project.fr`)"
-      - "traefik.http.services.pwa-chat.loadbalancer.server.port=3000"
       - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.pwa-chat-http.rule=Host(`your.domain.tld`)" # remplacer par ton domaine
+      - "traefik.http.routers.pwa-chat-http.entrypoints=web"
+      - "traefik.http.routers.pwa-chat-http.middlewares=redirect-to-https@docker"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.pwa-chat.rule=Host(`your.domain.tld`)" # remplacer par ton domaine
+      - "traefik.http.routers.pwa-chat.entrypoints=websecure"
+      - "traefik.http.routers.pwa-chat.tls=true"
+      - "traefik.http.routers.pwa-chat.tls.certresolver=http"
+      - "traefik.http.services.pwa-chat.loadbalancer.server.port=3000"
     networks:
       - traefik-public
