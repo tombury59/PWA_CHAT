@@ -4,6 +4,18 @@ import { useRouter } from "next/navigation";
 
 const API_URL = "https://api.tools.gavago.fr/socketio/api/rooms";
 
+const decodeRoomName = (encodedName: string): string => {
+    try {
+        return decodeURIComponent(
+            decodeURIComponent(
+                encodedName.replace(/\+/g, ' ')
+            )
+        );
+    } catch {
+        return encodedName;
+    }
+};
+
 const ChannelList: React.FC = () => {
     const [rooms, setRooms] = useState<string[]>([]);
     const [localRooms, setLocalRooms] = useState<string[]>([]);
@@ -13,6 +25,10 @@ const ChannelList: React.FC = () => {
     const [creating, setCreating] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
+
+    const filteredRooms = localRooms.filter(room =>
+        decodeRoomName(room).toLowerCase().includes(newRoom.toLowerCase())
+    );
 
     const parseRoomsResponse = (json: any): string[] => {
         if (!json) return [];
@@ -24,7 +40,7 @@ const ChannelList: React.FC = () => {
                 const parsed = JSON.parse(json.data);
                 if (Array.isArray(parsed)) return parsed.map(String);
                 if (typeof parsed === "object" && parsed !== null) return Object.keys(parsed);
-            } catch (e) {}
+            } catch (e) { }
         }
         if (Array.isArray(json)) return json.map(String);
         if (Array.isArray(json.rooms)) return json.rooms.map(String);
@@ -65,7 +81,8 @@ const ChannelList: React.FC = () => {
 
     const handleCreateRoom = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newRoom.trim()) return;
+        // Prevent creation if filtering found matches or input empty
+        if (!newRoom.trim() || filteredRooms.length > 0) return;
 
         setCreating(true);
         setError(null);
@@ -85,17 +102,6 @@ const ChannelList: React.FC = () => {
         }
     };
 
-    const decodeRoomName = (encodedName: string): string => {
-        try {
-            return decodeURIComponent(
-                decodeURIComponent(
-                    encodedName.replace(/\+/g, ' ')
-                )
-            );
-        } catch {
-            return encodedName;
-        }
-    };
 
     useEffect(() => {
         fetchRooms();
@@ -114,14 +120,14 @@ const ChannelList: React.FC = () => {
                             type="text"
                             value={newRoom}
                             onChange={(e) => setNewRoom(e.target.value)}
-                            placeholder="Nom de la salle"
+                            placeholder="Rechercher ou créer une salle..."
                             className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-[var(--background-light)] text-[var(--text)] border border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
                             disabled={creating}
                             maxLength={50}
                         />
                         <button
                             type="submit"
-                            disabled={creating || !newRoom.trim()}
+                            disabled={creating || !newRoom.trim() || filteredRooms.length > 0}
                             className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--background)] font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-all whitespace-nowrap"
                         >
                             {creating ? "..." : "Créer"}
@@ -163,7 +169,7 @@ const ChannelList: React.FC = () => {
             ) : (
                 <div className="relative">
                     <ul className="flex flex-col gap-3 max-h-[50vh] sm:max-h-[300px] overflow-y-auto pr-2 -mr-2">
-                        {localRooms.map((room) => (
+                        {filteredRooms.map((room) => (
                             <li
                                 key={room}
                                 className="group p-4 rounded-xl bg-[var(--background-light)] shadow-md hover:shadow-lg hover:bg-[var(--background-dark)] transition-all border border-transparent hover:border-[var(--accent)]/30"

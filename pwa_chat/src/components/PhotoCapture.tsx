@@ -6,9 +6,10 @@ interface PhotoCaptureProps {
     onPhotoCapture: (photo: string | null) => void;
     maxDimension?: number; // optional: maximum width/height of the exported image
     quality?: number; // optional: JPEG quality between 0 and 1
+    useThumbnail?: boolean; // optional: if true (default), returns a small thumbnail (128px). If false, respects maxDimension.
 }
 
-const PhotoCapture: React.FC<PhotoCaptureProps> = ({ photoPreview, onPhotoCapture, maxDimension = 512, quality = 0.6 }) => {
+const PhotoCapture: React.FC<PhotoCaptureProps> = ({ photoPreview, onPhotoCapture, maxDimension = 512, quality = 0.6, useThumbnail = true }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isStreaming, setIsStreaming] = useState(false);
 
@@ -55,6 +56,13 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({ photoPreview, onPhotoCaptur
             if (ctx) {
                 // Draw reduced (full) image onto canvas
                 ctx.drawImage(videoRef.current, 0, 0, targetWidth, targetHeight);
+
+                if (!useThumbnail) {
+                    const photoData = canvas.toDataURL('image/jpeg', quality);
+                    onPhotoCapture(photoData);
+                    stopCamera();
+                    return;
+                }
 
                 // Create a small thumbnail to store/send (much cheaper in localStorage / headers)
                 try {

@@ -34,6 +34,9 @@ const Rooms: React.FC = () => {
         name: "Moi",
         avatar: defaultAvatar,
     });
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [geoError, setGeoError] = useState<string | null>(null);
+    const [loadingLoc, setLoadingLoc] = useState(false);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -41,7 +44,39 @@ const Rooms: React.FC = () => {
         const avatarRaw = localStorage.getItem("userPhoto");
         const avatar = normalizeAvatar(avatarRaw);
         setUser({ name, avatar });
+
+        const locRaw = localStorage.getItem("userLocation");
+        if (locRaw) {
+            try {
+                setLocation(JSON.parse(locRaw));
+            } catch { }
+        }
     }, []);
+
+    const getLocation = () => {
+        if (!navigator.geolocation) {
+            setGeoError("Non supporté");
+            return;
+        }
+        setLoadingLoc(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const loc = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                setLocation(loc);
+                localStorage.setItem("userLocation", JSON.stringify(loc));
+                setGeoError(null);
+                setLoadingLoc(false);
+            },
+            (error) => {
+                console.error(error);
+                setGeoError("Erreur position");
+                setLoadingLoc(false);
+            }
+        );
+    };
 
     const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
         (e.currentTarget as HTMLImageElement).src = defaultAvatar;
@@ -87,6 +122,36 @@ const Rooms: React.FC = () => {
                                     <span className="font-semibold text-[var(--accent)]">{user.name}</span>
                                     <span className="text-sm text-[var(--text-secondary)]">Mon compte</span>
                                 </div>
+                            </div>
+
+                            <div className="p-4 border-t border-[var(--primary-light)] border-b">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="font-semibold text-[var(--accent)] text-sm">📍 Localisation</span>
+                                    <button
+                                        onClick={getLocation}
+                                        disabled={loadingLoc}
+                                        className="text-xs bg-[var(--accent)] text-[var(--background)] px-2 py-1 rounded hover:opacity-80 disabled:opacity-50"
+                                    >
+                                        {loadingLoc ? "..." : (location ? "Actualiser" : "Activer")}
+                                    </button>
+                                </div>
+                                {geoError && <p className="text-xs text-red-400 mb-1">{geoError}</p>}
+                                {location ? (
+                                    <div className="mt-2 w-full h-32 rounded-lg overflow-hidden border border-[var(--gray-border)] relative bg-gray-100">
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            scrolling="no"
+                                            marginHeight={0}
+                                            marginWidth={0}
+                                            src={`https://www.openstreetmap.org/export/embed.html?bbox=${location.lng - 0.001}%2C${location.lat - 0.001}%2C${location.lng + 0.001}%2C${location.lat + 0.001}&layer=mapnik&marker=${location.lat}%2C${location.lng}`}
+                                            title="Ma position"
+                                        ></iframe>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-[var(--text-secondary)] italic">Non définie</p>
+                                )}
                             </div>
 
                             <div className="p-3 hover:bg-[var(--primary-hover)] cursor-pointer transition-colors">
