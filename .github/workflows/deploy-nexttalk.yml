@@ -23,7 +23,7 @@ jobs:
         script: |
           # Aller dans le dossier du projet
           # Note: Assurez-vous que ce dossier correspond à votre structure sur le VPS
-          cd /var/www/PWA_CHAT/pwa_chat
+          cd /var/www/PWA_CHAT
           
           echo "📥 Git pull..."
           git pull origin main
