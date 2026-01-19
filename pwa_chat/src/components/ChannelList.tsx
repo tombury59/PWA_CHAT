@@ -196,9 +196,6 @@ const ChannelList: React.FC = () => {
                         ))}
                     </ul>
 
-                    {localRooms.length > 5 && (
-                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--primary)] to-transparent pointer-events-none"></div>
-                    )}
                 </div>
             )}
 
