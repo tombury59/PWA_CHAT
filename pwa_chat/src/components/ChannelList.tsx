@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useSocket } from "../contexts/SocketContext";
 
 const API_URL = "https://api.tools.gavago.fr/socketio/api/rooms";
 
@@ -25,10 +26,86 @@ const ChannelList: React.FC = () => {
     const [creating, setCreating] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
+    const { socket } = useSocket();
+    const [notifications, setNotifications] = useState<Record<string, boolean>>({});
 
     const filteredRooms = localRooms.filter(room =>
         decodeRoomName(room).toLowerCase().includes(newRoom.toLowerCase())
     );
+
+    // Initial load of notification preferences
+    useEffect(() => {
+        const loaded: Record<string, boolean> = {};
+        const storedKeys = Object.keys(localStorage).filter(k => k.startsWith("notif_"));
+        storedKeys.forEach(key => {
+            const roomName = key.replace("notif_", "");
+            loaded[roomName] = true;
+        });
+        setNotifications(loaded);
+    }, []);
+
+    // Socket management for notifications
+    // Socket management for notifications
+    useEffect(() => {
+        if (!socket) return;
+        const pseudo = localStorage.getItem("userName") || "Anonyme";
+        // Allow a 5-second buffer for clock skew or network delay to prevent missing "live" messages
+        const startTime = Date.now() - 5000;
+
+        // Join rooms that have notifications enabled
+        Object.entries(notifications).forEach(([room, enabled]) => {
+            if (enabled) {
+                socket.emit("chat-join-room", { pseudo, roomName: room });
+            }
+        });
+
+        const handleMsg = (msg: any) => {
+            console.log("DEBUG MSG:", msg);
+            if (msg.categorie === "INFO") return;
+            if (msg.pseudo === pseudo) return;
+
+            // Ignore messages older than when we started listening (history)
+            const msgTime = new Date(msg.dateEmis).getTime();
+            if (msgTime < startTime) return;
+
+            if (Notification.permission === "granted") {
+                new Notification(`Message de ${msg.pseudo}`, {
+                    body: msg.content,
+                    requireInteraction: false
+                });
+            }
+        };
+
+        socket.on("chat-msg", handleMsg);
+
+        return () => {
+            socket.off("chat-msg", handleMsg);
+        };
+    }, [socket, notifications]);
+
+    const toggleNotification = (e: React.MouseEvent, room: string) => {
+        e.stopPropagation();
+
+        if (Notification.permission === "denied") {
+            alert("Notifications bloquées. Veuillez les autoriser dans les paramètres du site.");
+        } else if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        setNotifications(prev => {
+            const newState = !prev[room];
+            const pseudo = localStorage.getItem("userName") || "Anonyme";
+
+            if (newState) {
+                localStorage.setItem(`notif_${room}`, 'true');
+                socket?.emit("chat-join-room", { pseudo, roomName: room });
+            } else {
+                localStorage.removeItem(`notif_${room}`);
+                socket?.emit("chat-leave-room", { pseudo, roomName: room });
+            }
+            return { ...prev, [room]: newState };
+        });
+    };
 
     const parseRoomsResponse = (json: any): string[] => {
         if (!json) return [];
@@ -183,6 +260,21 @@ const ChannelList: React.FC = () => {
                                         <span className="opacity-60">#</span> {decodeRoomName(room)}
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => toggleNotification(e, room)}
+                                            className={`p-2 rounded-full transition-colors ${notifications[room] ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-gray-400 hover:text-[var(--accent)]"}`}
+                                            title={notifications[room] ? "Désactiver notifications" : "Activer notifications"}
+                                        >
+                                            {notifications[room] ? (
+                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                </svg>
+                                            )}
+                                        </button>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
