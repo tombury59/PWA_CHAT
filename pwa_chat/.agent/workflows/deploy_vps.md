@@ -1,63 +1,30 @@
 ---
-description: Deploy PWA Chat to VPS using Docker
+description: Deploy PWA Chat to VPS using GitHub Actions
 ---
 
-# Déploiement sur VPS (Docker)
+# Déploiement sur VPS (Via GitHub Actions)
 
-Cette procédure explique comment déployer l'application PWA Chat sur votre VPS.
+Le déploiement est désormais automatisé via GitHub Actions, remplaçant l'ancienne méthode Docker.
 
 ## Prérequis sur le VPS
-- Docker
-- Docker Compose
-- Git (si vous utilisez git)
+- **Node.js**: Installé
+- **PM2**: Installé globalement (`npm install -g pm2`)
+- **Dossier**: `/var/Chat-PWA/nexttalk` (ou le chemin configuré dans le workflow) doit exister et être un dépôt git cloné.
 
-## Étapes
+## Configuration GitHub
+Le fichier `.github/workflows/deploy-nexttalk.yml` gère le déploiement.
 
-1. **Préparer le VPS**
-   Connectez-vous à votre VPS :
-   ```bash
-   ssh user@votre-ip
-   ```
+### Secrets Requis
+Configurez ces secrets dans votre dépôt GitHub :
+- `VPS_HOST`: Adresse IP du VPS
+- `VPS_USERNAME`: Nom d'utilisateur (ex: root ou user)
+- `VPS_SSH_KEY`: Clé privée SSH pour l'accès sans mot de passe
 
-2. **Récupérer le code**
-   Clonez votre dépôt ou copiez les fichiers du projet.
-   ```bash
-   git clone <votre-repo-url> pwa-chat
-   cd pwa-chat
-   ```
+## Fonctionnement
+- À chaque `push` sur la branche `main` (modifiant le dossier `pwa_chat` ou le workflow), l'action se lance.
+- Elle se connecte au VPS, pull les changements, installe les dépendances, build et redémarre l'application via PM2.
 
-3. **Lancer l'application**
-   Construisez et lancez le conteneur :
-   ```bash
-   docker-compose up -d --build
-   ```
-
-4. **Vérification**
-   Vérifiez que le conteneur tourne :
-   ```bash
-   docker ps
-   ```
-   L'application devrait être accessible sur `http://localhost:3000` (ou l'IP de votre VPS sur le port 3000 si le pare-feu le permet).
-
-## Configuration HTTPS (Obligatoire pour PWA)
-
-Pour que la PWA (Service Workers, Caméra, etc.) fonctionne, vous **DEVEZ** être en HTTPS.
-Il est recommandé d'utiliser un reverse proxy comme Nginx ou Traefik devant le conteneur Docker.
-
-### Exemple Nginx (Simplifié)
-Si vous avez Nginx installé sur le VPS :
-1. Créez un bloc serveur pointant vers `http://localhost:3000`.
-2. Utilisez Certbot pour générer le SSL.
-
-```nginx
-server {
-    server_name votre-domaine.com;
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-    }
-}
-```
+Pour déclencher manuellement :
+1. Allez dans l'onglet **Actions** sur GitHub.
+2. Sélectionnez "Deploy NextTalk to VPS".
+3. Cliquez sur "Run workflow".
