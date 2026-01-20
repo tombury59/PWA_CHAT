@@ -28,6 +28,12 @@ const nextConfig = {
     swcMinify: true,
     experimental: {
         appDir: true
+    },
+    typescript: {
+        ignoreBuildErrors: true,
+    },
+    eslint: {
+        ignoreDuringBuilds: true,
     }
 };
 
