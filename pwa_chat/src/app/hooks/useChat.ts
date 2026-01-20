@@ -9,22 +9,27 @@ interface SocketMessage {
 }
 
 export const useChat = (roomId: string, pseudo: string) => {
-  const { socket } = useSocket();
+  const { socket, isConnected } = useSocket();
   const [messages, setMessages] = useState<SocketMessage[]>([]);
 
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.warn("[useChat] Socket non disponible");
+      return;
+    }
+
+    console.log(`[useChat] Socket disponible. Connecté: ${isConnected}, ID: ${socket.id}`);
 
     if (!hasJoinedRef.current) {
+      console.log(`[useChat] 🚪 Rejoindre la room "${roomId}" avec pseudo "${pseudo}"`);
       socket.emit("chat-join-room", { pseudo, roomName: roomId });
-
-
       hasJoinedRef.current = true;
     }
 
     const handleNewMessage = (newMessage: SocketMessage) => {
+      console.log("[useChat] 📨 Nouveau message reçu:", newMessage);
       setMessages((prevMessages) => {
         // Avoid duplicates if possible (rudimentary check by date and content)
         const exists = prevMessages.some(m =>
@@ -32,10 +37,14 @@ export const useChat = (roomId: string, pseudo: string) => {
           m.content === newMessage.content &&
           m.pseudo === newMessage.pseudo
         );
-        if (exists) return prevMessages;
+        if (exists) {
+          console.log("[useChat] ⚠️ Message dupliqué ignoré");
+          return prevMessages;
+        }
 
         const updated = [...prevMessages, newMessage];
         localStorage.setItem(`chat_messages_${roomId}`, JSON.stringify(updated));
+        console.log(`[useChat] ✅ Message ajouté. Total: ${updated.length}`);
         return updated;
       });
     };
@@ -43,11 +52,12 @@ export const useChat = (roomId: string, pseudo: string) => {
     socket.on("chat-msg", handleNewMessage);
 
     return () => {
+      console.log(`[useChat] 🚪 Quitter la room "${roomId}"`);
       socket.off("chat-msg", handleNewMessage);
       socket.emit("chat-leave-room", { pseudo, roomName: roomId });
       hasJoinedRef.current = false;
     };
-  }, [socket, roomId, pseudo]);
+  }, [socket, roomId, pseudo, isConnected]);
 
   // Load initial messages from localStorage
   useEffect(() => {
@@ -56,16 +66,25 @@ export const useChat = (roomId: string, pseudo: string) => {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
+          console.log(`[useChat] 📂 Chargement de ${parsed.length} messages depuis le cache`);
           setMessages(parsed);
         }
       }
     } catch (e) {
-      console.error("Error loading cached messages:", e);
+      console.error("[useChat] Erreur lors du chargement des messages en cache:", e);
     }
   }, [roomId]);
 
   const sendMessage = (content: string) => {
-    if (!socket || !content.trim()) return;
+    if (!socket) {
+      console.error("[useChat] ❌ Impossible d'envoyer: socket non disponible");
+      return;
+    }
+    if (!content.trim()) {
+      console.warn("[useChat] ⚠️ Message vide ignoré");
+      return;
+    }
+    console.log(`[useChat] 📤 Envoi du message: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`);
     socket.emit("chat-msg", { content, roomName: roomId });
   };
 

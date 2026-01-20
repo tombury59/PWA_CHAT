@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { SocketProvider } from "@/contexts/SocketContext";
+import ConnectionStatus from "@/components/ConnectionStatus";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
     const router = useRouter();
@@ -47,19 +48,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
     return (
         <html lang="fr">
-        <head>
-            <link rel="manifest" href="/manifest.json" />
-            <link rel="icon" href="/images/icons/Logo-192x192.png" sizes="192x192" type="image/png" />
-            <meta name="theme-color" content="#0070f3" />
-        </head>
-        <body>
-            {/* 👇 2. Envelopper {children} avec le SocketProvider */}
-            <SocketProvider>
-                <ServiceWorkerRegister />
-                {loading && <Loader />}
-                {children}
-            </SocketProvider>
-        </body>
+            <head>
+                <link rel="manifest" href="/manifest.json" />
+                <link rel="icon" href="/images/icons/Logo-192x192.png" sizes="192x192" type="image/png" />
+                <meta name="theme-color" content="#0070f3" />
+            </head>
+            <body>
+                {/* 👇 2. Envelopper {children} avec le SocketProvider */}
+                <SocketProvider>
+                    <ConnectionStatus />
+                    <ServiceWorkerRegister />
+                    {loading && <Loader />}
+                    {children}
+                </SocketProvider>
+            </body>
         </html>
     );
 }
