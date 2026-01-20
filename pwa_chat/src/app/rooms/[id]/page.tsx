@@ -12,12 +12,19 @@ const ChatImage = ({ src, alt, className }: { src: string, alt: string, classNam
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const retryRef = useRef(0);
+  const retryTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     // Reset state when src changes
     setLoading(true);
     setError(false);
     setImgSrc(null);
+    retryRef.current = 0;
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current as any);
+      retryTimerRef.current = null;
+    }
 
     // Case 1: Base64 or specific generic prefix
     if (src.startsWith("data:") || src.startsWith("IMAGE:")) {
@@ -29,33 +36,57 @@ const ChatImage = ({ src, alt, className }: { src: string, alt: string, classNam
     // Case 2: API URL that returns JSON
     // We check for /api/images/ to match both .../socketio/api/images and potential variants
     if (src.includes("/api/images/")) {
-      console.log("ChatImage fetching JSON for:", src);
-      fetch(src)
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          console.log("ChatImage response:", data);
-          if (data.success && data.data_image) {
-            setImgSrc(data.data_image);
-          } else {
-            console.warn("ChatImage: Invalid data structure or success=false", data);
-            // Fallback: try using the URL itself if JSON failed but we have a fallback? 
-            // Actually if it's the API, it MUST return JSON. If it failed, it's an error.
-            setError(true);
-          }
-        })
-        .catch((err) => {
-          console.error("ChatImage fetch error:", err);
-          setError(true);
-        })
-        .finally(() => setLoading(false));
+      // Fetch with retry if API signals success=false (e.g. client not connected yet)
+      const fetchJson = () => {
+        console.log("ChatImage fetching JSON for:", src, "attempt", retryRef.current + 1);
+        fetch(src)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+          })
+          .then((data) => {
+            console.log("ChatImage response:", data);
+            if (data && data.success && data.data_image) {
+              setImgSrc(data.data_image);
+              setLoading(false);
+            } else {
+              // success=false or missing data -> retry a few times then give up
+              console.warn("ChatImage: Invalid data structure or success=false", data);
+              if (retryRef.current < 4) {
+                const delay = 1000 * Math.pow(2, retryRef.current); // 1s,2s,4s,8s
+                retryRef.current += 1;
+                retryTimerRef.current = window.setTimeout(fetchJson, delay) as any;
+              } else {
+                setError(true);
+                setLoading(false);
+              }
+            }
+          })
+          .catch((err) => {
+            console.error("ChatImage fetch error:", err);
+            if (retryRef.current < 4) {
+              const delay = 1000 * Math.pow(2, retryRef.current);
+              retryRef.current += 1;
+              retryTimerRef.current = window.setTimeout(fetchJson, delay) as any;
+            } else {
+              setError(true);
+              setLoading(false);
+            }
+          });
+      };
+
+      fetchJson();
     } else {
       // Case 3: Direct image URL
       setImgSrc(src);
       setLoading(false);
     }
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current as any);
+        retryTimerRef.current = null;
+      }
+    };
   }, [src]);
 
   if (loading) return <div className="w-32 h-32 bg-gray-200 animate-pulse rounded-lg" />;
@@ -281,26 +312,30 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
 
     setIsUploading(true);
     try {
-      const id = socket.id;
-      // Upload to API
-      const response = await fetch(`${API_IMAGES_URL}/${id}`, {
+      // Conformément à la doc de l'API : on POST vers l'endpoint principal en fournissant
+      // l'id du client connecté (socket.id) et les données de l'image dans le body.
+      // Ensuite on envoie directement le data URI dans le message pour que le message
+      // contienne l'image elle-même (ainsi les anciens messages ne sont pas affectés
+      // si le serveur écrase la ressource associée à l'id du client).
+      const response = await fetch(`${API_IMAGES_URL}/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          id: id,
+          id: socket.id,
           image_data: photoPreview
         })
       });
 
       if (response.ok) {
-        const imageUrl = `${API_IMAGES_URL}/${id}`;
-        sendMessage(`[IMAGE] ${imageUrl}`);
+        // On ne dépend pas d'une URL retournée : envoyer le data URI directement.
+        // C'est la façon la plus sûre pour que le message reste identique.
+        sendMessage(photoPreview);
         setShowCamera(false);
         setPhotoPreview(null);
       } else {
-        console.error("Failed to upload image");
+        console.error("Failed to upload image", response.status, await response.text());
         alert("Erreur lors de l'envoi de l'image");
       }
     } catch (e) {
