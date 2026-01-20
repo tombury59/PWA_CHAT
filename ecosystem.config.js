@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
-        name: 'pwa-chat',
+        name: 'pwa_chat',
         script: 'npm',
         args: 'start',
         cwd: '/var/www/PWA_CHAT/pwa_chat',
