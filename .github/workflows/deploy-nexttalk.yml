@@ -35,7 +35,7 @@ jobs:
           if [ ! -f .env.local ]; then
             cat > .env.local << 'ENVEOF'
           NODE_ENV=production
-          PORT=3000
+          PORT=8080
           ENVEOF
           fi
           

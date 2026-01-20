@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSocket } from "../contexts/SocketContext";
 
-const API_URL = "https://api.tools.gavago.fr/socketio/api/rooms";
+const API_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.tools.gavago.fr/socketio/api") + "/rooms";
 
 const decodeRoomName = (encodedName: string): string => {
     try {

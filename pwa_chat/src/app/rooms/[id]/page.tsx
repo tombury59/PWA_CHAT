@@ -6,48 +6,71 @@ import { useRoomStatus } from "../../hooks/useRoomStatus";
 import { useSocket } from "../../../contexts/SocketContext";
 import PhotoCapture from "../../../components/PhotoCapture";
 
-const API_BASE_URL = "https://api.tools.gavago.fr/socketio/api";
-const API_IMAGES_URL = "https://api.tools.gavago.fr/socketio/tchat/api/images";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.tools.gavago.fr/socketio/api";
+const API_IMAGES_URL = process.env.NEXT_PUBLIC_API_IMAGES_URL || "https://api.tools.gavago.fr/socketio/api/images";
 
 const ChatImage = ({ src, alt, className }: { src: string, alt: string, className: string }) => {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    // Reset state when src changes
+    setLoading(true);
+    setError(false);
+    setImgSrc(null);
+
+    // Case 1: Base64 or specific generic prefix
     if (src.startsWith("data:") || src.startsWith("IMAGE:")) {
       setImgSrc(src.startsWith("IMAGE:") ? src.replace("IMAGE:", "") : src);
       setLoading(false);
       return;
     }
 
-    // Helper to determine if we should fetch JSON
-    if (src.includes("/tchat/api/images/")) {
+    // Case 2: API URL that returns JSON
+    // We check for /api/images/ to match both .../socketio/api/images and potential variants
+    if (src.includes("/api/images/")) {
+      console.log("ChatImage fetching JSON for:", src);
       fetch(src)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          return res.json();
+        })
         .then((data) => {
+          console.log("ChatImage response:", data);
           if (data.success && data.data_image) {
             setImgSrc(data.data_image);
           } else {
-            // Fallback if structure is different
-            setImgSrc(src);
+            console.warn("ChatImage: Invalid data structure or success=false", data);
+            // Fallback: try using the URL itself if JSON failed but we have a fallback? 
+            // Actually if it's the API, it MUST return JSON. If it failed, it's an error.
+            setError(true);
           }
         })
-        .catch(() => setImgSrc(src))
+        .catch((err) => {
+          console.error("ChatImage fetch error:", err);
+          setError(true);
+        })
         .finally(() => setLoading(false));
     } else {
+      // Case 3: Direct image URL
       setImgSrc(src);
       setLoading(false);
     }
   }, [src]);
 
   if (loading) return <div className="w-32 h-32 bg-gray-200 animate-pulse rounded-lg" />;
+  if (error) return <div className="p-2 bg-red-100 text-red-500 rounded border border-red-200 text-xs">Erreur de chargement</div>;
 
   return (
     <img
       src={imgSrc || src}
       alt={alt}
       className={className}
-      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+      onError={(e) => {
+        console.error("Image load error for src:", imgSrc || src);
+        setError(true);
+      }}
     />
   );
 };
@@ -56,14 +79,43 @@ const MessageContent = ({ content }: { content: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const maxLength = 300;
 
+  console.log("MessageContent:", content.substring(0, 50));
+
   if (content.startsWith("[IMAGE]") || content.startsWith("IMAGE:")) {
+    const rawSrc = content.startsWith("[IMAGE]") ? content.replace("[IMAGE] ", "") : content.replace("IMAGE:", "");
+    // If the src looks like a pure ID (no dots, no slashes, just alphanum), prepend the API URL
+    // This handles the case where the server might send "IMAGE: <ID>"
+    const isPareId = /^[a-zA-Z0-9_-]+$/.test(rawSrc.trim());
+    const finalSrc = isPareId ? `${API_IMAGES_URL}/${rawSrc.trim()}` : rawSrc;
+
     return (
       <ChatImage
-        src={content.startsWith("[IMAGE]") ? content.replace("[IMAGE] ", "") : content.replace("IMAGE:", "")}
+        src={finalSrc}
         alt="Shared photo"
         className="rounded-lg max-w-full h-auto mt-2 border border-white/20"
       />
     );
+  }
+
+  // Handle server notification format for images
+  // Example: "Nouvelle image pour le user Romain.\n11:30\nRomain\nxCTSEYlzgEdLwwNOAAFl"
+  if (content.includes("Nouvelle image pour le user")) {
+    const lines = content.trim().split('\n');
+    // Ensure we have multiple lines, otherwise it's just the notification text
+    if (lines.length > 1) {
+      const potentialId = lines[lines.length - 1].trim();
+      // Basic validation: ID should not contain spaces and be reasonably long
+      if (potentialId && potentialId.length > 5 && !potentialId.includes(' ')) {
+        const imageUrl = `${API_IMAGES_URL}/${potentialId}`;
+        return (
+          <ChatImage
+            src={imageUrl}
+            alt="Shared photo"
+            className="rounded-lg max-w-full h-auto mt-2 border border-white/20"
+          />
+        );
+      }
+    }
   }
 
   if (content.length <= maxLength) {
