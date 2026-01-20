@@ -3,10 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useChat } from "../../hooks/useChat";
 import { useRoomStatus } from "../../hooks/useRoomStatus";
-import { useSocket } from "../../../contexts/SocketContext";
+import { useSocket } from "@/contexts/SocketContext";
 import PhotoCapture from "../../../components/PhotoCapture";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.tools.gavago.fr/socketio/api";
 const API_IMAGES_URL = process.env.NEXT_PUBLIC_API_IMAGES_URL || "https://api.tools.gavago.fr/socketio/api/images";
 
 const ChatImage = ({ src, alt, className }: { src: string, alt: string, className: string }) => {
@@ -67,7 +66,7 @@ const ChatImage = ({ src, alt, className }: { src: string, alt: string, classNam
       src={imgSrc || src}
       alt={alt}
       className={className}
-      onError={(e) => {
+      onError={() => {
         console.error("Image load error for src:", imgSrc || src);
         setError(true);
       }}
@@ -81,10 +80,32 @@ const MessageContent = ({ content }: { content: string }) => {
 
   console.log("MessageContent:", content.substring(0, 50));
 
+  // Split into trimmed lines for flexible parsing
+  const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // 1) Detect data URI anywhere in the message (e.g. "Léane\ndata:image/jpeg;base64,...")
+  const dataLine = lines.find(l => l.toLowerCase().includes('data:image'));
+  if (dataLine) {
+    // If line has a prefix like "IMAGE:" or "[IMAGE]" remove it
+    let rawSrc = dataLine;
+    const up = rawSrc.toUpperCase();
+    if (up.startsWith('[IMAGE]')) rawSrc = rawSrc.slice(7).trim();
+    else if (up.startsWith('IMAGE:')) rawSrc = rawSrc.slice(6).trim();
+    return (
+      <ChatImage
+        src={rawSrc}
+        alt="Shared photo"
+        className="rounded-lg max-w-full h-auto mt-2 border border-white/20"
+      />
+    );
+  }
+
+  // 2) Keep existing [IMAGE] / IMAGE: prefix handling (covers cases where full URL or ID follows)
   if (content.startsWith("[IMAGE]") || content.startsWith("IMAGE:")) {
-    const rawSrc = content.startsWith("[IMAGE]") ? content.replace("[IMAGE] ", "") : content.replace("IMAGE:", "");
-    // If the src looks like a pure ID (no dots, no slashes, just alphanum), prepend the API URL
-    // This handles the case where the server might send "IMAGE: <ID>"
+    let rawSrc = content;
+    const upC = rawSrc.toUpperCase();
+    if (upC.startsWith('[IMAGE]')) rawSrc = rawSrc.slice(7).trim();
+    else if (upC.startsWith('IMAGE:')) rawSrc = rawSrc.slice(6).trim();
     const isPareId = /^[a-zA-Z0-9_-]+$/.test(rawSrc.trim());
     const finalSrc = isPareId ? `${API_IMAGES_URL}/${rawSrc.trim()}` : rawSrc;
 
@@ -97,16 +118,19 @@ const MessageContent = ({ content }: { content: string }) => {
     );
   }
 
-  // Handle server notification format for images
+  // 3) Handle server notification format for images
   // Example: "Nouvelle image pour le user Romain.\n11:30\nRomain\nxCTSEYlzgEdLwwNOAAFl"
-  if (content.includes("Nouvelle image pour le user")) {
-    const lines = content.trim().split('\n');
-    // Ensure we have multiple lines, otherwise it's just the notification text
-    if (lines.length > 1) {
-      const potentialId = lines[lines.length - 1].trim();
-      // Basic validation: ID should not contain spaces and be reasonably long
-      if (potentialId && potentialId.length > 5 && !potentialId.includes(' ')) {
+  if (content.includes("Nouvelle image pour le user") || content.includes("Nouvelle image pour l'user")) {
+    console.log("[MessageContent] Server notification detected, parsing...");
+    const notifLines = content.trim().split('\n');
+    console.log("[MessageContent] Lines:", notifLines);
+    if (notifLines.length > 1) {
+      const potentialId = notifLines[notifLines.length - 1].trim();
+      console.log("[MessageContent] Potential ID:", potentialId);
+
+      if (potentialId && potentialId.length > 5 && /^[a-zA-Z0-9_-]+$/.test(potentialId)) {
         const imageUrl = `${API_IMAGES_URL}/${potentialId}`;
+        console.log("[MessageContent] ✅ Valid image ID. URL:", imageUrl);
         return (
           <ChatImage
             src={imageUrl}
@@ -114,10 +138,28 @@ const MessageContent = ({ content }: { content: string }) => {
             className="rounded-lg max-w-full h-auto mt-2 border border-white/20"
           />
         );
+      } else {
+        console.warn("[MessageContent] ❌ Invalid image ID format:", potentialId);
       }
     }
   }
 
+  // 4) Check if the entire content looks like a bare image ID
+  const trimmedContent = content.trim();
+  if (trimmedContent.length >= 20 && trimmedContent.length <= 30 && /^[a-zA-Z0-9_-]+$/.test(trimmedContent)) {
+    console.log("[MessageContent] Detected bare image ID:", trimmedContent);
+    const imageUrl = `${API_IMAGES_URL}/${trimmedContent}`;
+
+    return (
+      <ChatImage
+        src={imageUrl}
+        alt="Shared photo"
+        className="rounded-lg max-w-full h-auto mt-2 border border-white/20"
+      />
+    );
+  }
+
+  // 5) Fallback to text display with "Voir plus" for long content
   if (content.length <= maxLength) {
     return <div className="whitespace-pre-wrap">{content}</div>;
   }
@@ -149,7 +191,7 @@ const decodeRoomName = (encodedName: string): string => {
 const normalizePseudo = (p: any): string => {
   if (!p) return "Anonyme";
   if (typeof p === "string") return p;
-  if (typeof p === "object" && p !== null) {
+  if (typeof p === "object") {
     return p.username || p.name || "Anonyme";
   }
   return String(p);
@@ -172,7 +214,6 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
   const router = useRouter();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
-  const [showTooltip, setShowTooltip] = useState(false);
   const pseudo = typeof window !== "undefined" ? localStorage.getItem("userName") || "Anonyme" : "Anonyme";
   const decodedRoomId = decodeRoomName(roomId);
 
@@ -183,7 +224,7 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
   const [showCamera, setShowCamera] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // Gallery & File Import
   const [showGallery, setShowGallery] = useState(false);
