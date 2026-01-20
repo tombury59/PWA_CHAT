@@ -37,6 +37,8 @@ const Rooms: React.FC = () => {
     const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [geoError, setGeoError] = useState<string | null>(null);
     const [loadingLoc, setLoadingLoc] = useState(false);
+    const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+    const [isCharging, setIsCharging] = useState<boolean>(false);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -50,6 +52,23 @@ const Rooms: React.FC = () => {
             try {
                 setLocation(JSON.parse(locRaw));
             } catch { }
+        }
+
+        // Battery API
+        if ('getBattery' in navigator) {
+            (navigator as any).getBattery().then((battery: any) => {
+                setBatteryLevel(Math.round(battery.level * 100));
+                setIsCharging(battery.charging);
+
+                battery.addEventListener('levelchange', () => {
+                    setBatteryLevel(Math.round(battery.level * 100));
+                });
+                battery.addEventListener('chargingchange', () => {
+                    setIsCharging(battery.charging);
+                });
+            }).catch(() => {
+                // Battery API not supported
+            });
         }
     }, []);
 
@@ -153,6 +172,28 @@ const Rooms: React.FC = () => {
                                     <p className="text-xs text-[var(--text-secondary)] italic">Non définie</p>
                                 )}
                             </div>
+
+                            {batteryLevel !== null && (
+                                <div className="p-4 border-t border-[var(--primary-light)] border-b">
+                                    <div className="flex items-center justify-between">
+                                        <span className="font-semibold text-[var(--accent)] text-sm">
+                                            🔋 Batterie
+                                        </span>
+                                        <span className="text-sm text-[var(--text-secondary)]">
+                                            {batteryLevel}% {isCharging && '⚡'}
+                                        </span>
+                                    </div>
+                                    <div className="mt-2 w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full transition-all ${batteryLevel > 50 ? 'bg-green-500' :
+                                                    batteryLevel > 20 ? 'bg-yellow-500' :
+                                                        'bg-red-500'
+                                                }`}
+                                            style={{ width: `${batteryLevel}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="p-3 hover:bg-[var(--primary-hover)] cursor-pointer transition-colors">
                                 <Logout />

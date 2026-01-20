@@ -280,112 +280,127 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
     setInput("");
   };
 
+  const [showUserList, setShowUserList] = useState(false);
+
   return (
-    <div className="max-w-5xl mx-auto mt-8 p-4 sm:p-6 rounded-2xl shadow-2xl bg-[var(--primary)] text-[var(--foreground)] flex flex-col md:flex-row gap-4 h-auto md:h-[70vh]">
-      <div className="flex-1 flex flex-col min-h-[50vh] md:min-h-0">
-        <div className="flex justify-between items-center mb-4 relative">
-          <h2
-            className="text-2xl font-bold truncate max-w-[60%]"
-            style={{ color: "var(--accent)" }}
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+    <div className="fixed inset-0 bg-[var(--background)] flex flex-col md:max-w-5xl md:mx-auto md:relative md:mt-8 md:rounded-2xl md:shadow-2xl md:min-h-[85vh] md:max-h-[85vh] overflow-hidden">
+      {/* Header */}
+      <div className="bg-[var(--primary)] p-4 flex justify-between items-center shadow-md z-10">
+        <h2
+          className="text-lg sm:text-xl md:text-2xl font-bold truncate flex-1"
+          style={{ color: "var(--accent)" }}
+        >
+          {decodedRoomId.length > 20
+            ? `${decodedRoomId.substring(0, 17)}...`
+            : decodedRoomId}
+        </h2>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowUserList(!showUserList)}
+            className="md:hidden px-3 py-2 rounded-lg bg-[var(--primary-dark)] text-[var(--accent)] font-bold shadow hover:bg-[var(--primary-light)] transition"
           >
-            Chat – Salle {decodedRoomId.length > 30
-              ? `${decodedRoomId.substring(0, 27)}...`
-              : decodedRoomId}
-            {showTooltip && decodedRoomId.length > 30 && (
-              <div className="absolute left-0 top-full mt-2 px-3 py-2 bg-black/80 text-white text-sm rounded-lg z-50 max-w-[300px] break-words whitespace-normal">
-                {decodedRoomId}
-              </div>
-            )}
-          </h2>
+            👥 {clientList.length}
+          </button>
           <button
             onClick={() => router.back()}
-            className="px-4 py-2 rounded-lg bg-[var(--primary-dark)] text-[var(--accent)] font-bold shadow hover:bg-[var(--primary-light)] transition"
+            className="px-3 py-2 rounded-lg bg-[var(--primary-dark)] text-[var(--accent)] font-bold shadow hover:bg-[var(--primary-light)] transition"
           >
-            ← Retour
+            ←
           </button>
         </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto mb-4 bg-[var(--background-light)] rounded-xl p-4 shadow-inner">
-          {messages.length > visibleCount && (
-            <button
-              onClick={() => setVisibleCount(prev => prev + 10)}
-              className="w-full text-center text-sm text-[var(--accent)] py-2 hover:bg-black/5 rounded transition mb-2"
-            >
-              ↑ Anciens messages
-            </button>
-          )}
-          {messages.slice(Math.max(messages.length - visibleCount, 0)).map((msg, index) => (
-            <div
-              key={`${msg.dateEmis}-${index}`}
-              className={`flex items-end mb-3 ${normalizePseudo(msg.pseudo) === pseudo ? "justify-end" : "justify-start"
-                }`}
-            >
-              {msg.categorie === "INFO" ? (
-                <div
-                  className="w-full text-center text-sm text-[var(--text-muted)] italic my-2 hover:cursor-help"
-                  title={msg.content}
-                >
-                  {formatInfoMessage(msg.content)}
-                </div>
-              ) : (
-                <div
-                  className={`px-4 py-2 rounded-2xl shadow max-w-[90%] sm:max-w-sm break-words ${normalizePseudo(msg.pseudo) === pseudo
-                    ? "bg-[var(--message-sent)] text-[var(--text-on-primary)]"
-                    : "bg-[var(--message-received)] text-[var(--foreground)]"
-                    }`}
-                >
-                  <div className="text-sm font-bold">{normalizePseudo(msg.pseudo)}</div>
-                  <MessageContent content={msg.content} />
-                  <div className="text-xs text-[var(--text-muted)] text-right mt-1">
-                    {new Date(msg.dateEmis).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        {/* Messages Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 bg-[var(--background-light)]">
+            {messages.length > visibleCount && (
+              <button
+                onClick={() => setVisibleCount(prev => prev + 10)}
+                className="w-full text-center text-sm text-[var(--accent)] py-2 hover:bg-black/5 rounded transition mb-2"
+              >
+                ↑ Anciens messages
+              </button>
+            )}
+            {messages.slice(Math.max(messages.length - visibleCount, 0)).map((msg, index) => (
+              <div
+                key={`${msg.dateEmis}-${index}`}
+                className={`flex items-end mb-3 ${normalizePseudo(msg.pseudo) === pseudo ? "justify-end" : "justify-start"
+                  }`}
+              >
+                {msg.categorie === "INFO" ? (
+                  <div
+                    className="w-full text-center text-sm text-[var(--text-muted)] italic my-2"
+                  >
+                    {formatInfoMessage(msg.content)}
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
-          <div ref={chatEndRef} />
-        </div>
+                ) : (
+                  <div
+                    className={`px-4 py-2 rounded-2xl shadow max-w-[85%] sm:max-w-sm break-words ${normalizePseudo(msg.pseudo) === pseudo
+                      ? "bg-[var(--message-sent)] text-[var(--text-on-primary)]"
+                      : "bg-[var(--message-received)] text-[var(--foreground)]"
+                      }`}
+                  >
+                    <div className="text-sm font-bold">{normalizePseudo(msg.pseudo)}</div>
+                    <MessageContent content={msg.content} />
+                    <div className="text-xs text-[var(--text-muted)] text-right mt-1">
+                      {new Date(msg.dateEmis).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend(e);
-              }
-            }}
-            className="flex-1 p-3 rounded-lg bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2"
-            placeholder="Écrivez un message…"
-          />
-          <button
-            onClick={openGallery}
-            className="px-4 py-3 rounded-xl font-bold bg-gray-200 text-gray-700 shadow-lg hover:bg-gray-300 transition"
-            title="Ouvrir la galerie"
-          >
-            🖼️
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-3 rounded-xl font-bold bg-gray-200 text-gray-700 shadow-lg hover:bg-gray-300 transition"
-            title="Importer une image"
-          >
-            📎
-          </button>
-          <button
-            onClick={() => setShowCamera(true)}
-            className="px-4 py-3 rounded-xl font-bold bg-gray-200 text-gray-700 shadow-lg hover:bg-gray-300 transition"
-            title="Prendre une photo"
-          >
-            📷
-          </button>
+          {/* Input Area - Mobile Optimized */}
+          <div className="bg-[var(--primary)] p-3 border-t border-[var(--accent)]/20">
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend(e);
+                  }
+                }}
+                className="flex-1 p-2 sm:p-3 rounded-lg bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 text-sm sm:text-base"
+                placeholder="Message..."
+              />
+              <button
+                onClick={openGallery}
+                className="p-2 sm:p-3 rounded-lg bg-[var(--accent)]/20 text-[var(--accent)] hover:bg-[var(--accent)]/30 transition"
+                title="Galerie"
+              >
+                🖼️
+              </button>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 sm:p-3 rounded-lg bg-[var(--accent)]/20 text-[var(--accent)] hover:bg-[var(--accent)]/30 transition"
+                title="Importer"
+              >
+                📎
+              </button>
+              <button
+                onClick={() => setShowCamera(true)}
+                className="p-2 sm:p-3 rounded-lg bg-[var(--accent)]/20 text-[var(--accent)] hover:bg-[var(--accent)]/30 transition"
+                title="Photo"
+              >
+                📷
+              </button>
+              <button
+                onClick={handleSend}
+                className="p-2 sm:p-3 rounded-lg bg-[var(--accent)] text-[var(--background)] font-bold shadow-lg hover:opacity-90 transition"
+              >
+                ➤
+              </button>
+            </div>
+          </div>
 
           <input
             ref={fileInputRef}
@@ -394,15 +409,84 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
             className="hidden"
             onChange={handleFileChange}
           />
-          <button
-            onClick={handleSend}
-            className="px-4 py-3 rounded-xl font-bold bg-[var(--accent)] text-[var(--background)] shadow-lg hover:bg-[var(--accent-light)] transition"
-          >
-            Envoyer
-          </button>
+        </div>
+
+        {/* Desktop User List */}
+        <div className="hidden md:flex w-64 bg-[var(--background-light)] p-4 flex-col border-l border-[var(--accent)]/20">
+          <h3 className="text-lg font-bold mb-3 pb-2 border-b border-[var(--accent)]" style={{ color: "var(--accent)" }}>
+            En ligne ({clientList.length})
+          </h3>
+          <div className="flex-1 overflow-y-auto space-y-2">
+            {clientList.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)] italic">Aucun utilisateur</p>
+            ) : (
+              clientList.map((clientPseudo, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-2 p-2 rounded-lg ${normalizePseudo(clientPseudo) === pseudo
+                    ? "bg-[var(--accent)] bg-opacity-20 font-bold"
+                    : "bg-[var(--background)] bg-opacity-50"
+                    }`}
+                >
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-sm truncate">{normalizePseudo(clientPseudo)}</span>
+                  {normalizePseudo(clientPseudo) === pseudo && (
+                    <span className="ml-auto text-xs text-[var(--accent)]">(vous)</span>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Mobile User List - Bottom Sheet */}
+      {showUserList && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setShowUserList(false)}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-[var(--primary)] rounded-t-2xl p-4 max-h-[60vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold" style={{ color: "var(--accent)" }}>
+                En ligne ({clientList.length})
+              </h3>
+              <button
+                onClick={() => setShowUserList(false)}
+                className="text-2xl text-[var(--accent)]"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2">
+              {clientList.length === 0 ? (
+                <p className="text-sm text-[var(--text-muted)] italic">Aucun utilisateur</p>
+              ) : (
+                clientList.map((clientPseudo, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-2 p-3 rounded-lg ${normalizePseudo(clientPseudo) === pseudo
+                      ? "bg-[var(--accent)] bg-opacity-20 font-bold"
+                      : "bg-[var(--background-light)]"
+                      }`}
+                  >
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-sm">{normalizePseudo(clientPseudo)}</span>
+                    {normalizePseudo(clientPseudo) === pseudo && (
+                      <span className="ml-auto text-xs text-[var(--accent)]">(vous)</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Camera Modal */}
       {showCamera && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-white rounded-xl p-4 w-full max-w-lg flex flex-col items-center">
@@ -444,6 +528,7 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
         </div>
       )}
 
+      {/* Gallery Modal */}
       {showGallery && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
           <div className="bg-[var(--background)] rounded-xl p-4 w-full max-w-lg max-h-[80vh] flex flex-col">
@@ -470,33 +555,6 @@ const Chat: React.FC<{ roomId: string }> = ({ roomId }) => {
           </div>
         </div>
       )}
-
-      <div className="w-full md:w-64 bg-[var(--background-light)] rounded-xl p-4 shadow-inner flex flex-col">
-        <h3 className="text-lg font-bold mb-3 pb-2 border-b border-[var(--accent)]" style={{ color: "var(--accent)" }}>
-          En ligne ({clientList.length})
-        </h3>
-        <div className="flex-1 overflow-y-auto space-y-2">
-          {clientList.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)] italic">Aucun utilisateur connecté</p>
-          ) : (
-            clientList.map((clientPseudo, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-2 p-2 rounded-lg ${normalizePseudo(clientPseudo) === pseudo
-                  ? "bg-[var(--accent)] bg-opacity-20 font-bold"
-                  : "bg-[var(--background)] bg-opacity-50"
-                  }`}
-              >
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span className="text-sm truncate">{normalizePseudo(clientPseudo)}</span>
-                {normalizePseudo(clientPseudo) === pseudo && (
-                  <span className="ml-auto text-xs text-[var(--accent)]">(vous)</span>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
     </div>
   );
 };
