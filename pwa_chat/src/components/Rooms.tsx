@@ -186,8 +186,8 @@ const Rooms: React.FC = () => {
                                     <div className="mt-2 w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                                         <div
                                             className={`h-full transition-all ${batteryLevel > 50 ? 'bg-green-500' :
-                                                    batteryLevel > 20 ? 'bg-yellow-500' :
-                                                        'bg-red-500'
+                                                batteryLevel > 20 ? 'bg-yellow-500' :
+                                                    'bg-red-500'
                                                 }`}
                                             style={{ width: `${batteryLevel}%` }}
                                         />
