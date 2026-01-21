@@ -1,0 +1,7 @@
+{$DOMAIN_NAME} {
+    # Configuration automatique du SSL avec votre email
+    tls {$ACME_EMAIL}
+
+    # Redirection vers votre application Node.js
+    reverse_proxy chat-app:8080
+}

@@ -4,8 +4,28 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: pwa_chat_prod
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     restart: always
+    env_file: pwa_chat/.env # Charge vos variables DOMAIN_NAME, etc.
     environment:
       - NODE_ENV=production
+
+  reverse-proxy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file: pwa_chat/.env
+    restart: always
+    depends_on:
+      - chat-app
+
+volumes:
+  caddy_data:
+  caddy_config:
