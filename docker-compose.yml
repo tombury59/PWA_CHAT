@@ -1,0 +1,11 @@
+services:
+  chat-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pwa_chat_prod
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      - NODE_ENV=production

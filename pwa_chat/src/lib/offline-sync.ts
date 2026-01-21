@@ -1,4 +1,4 @@
-// src/lib/offline-sync.ts
+// src/__lib__/offline-sync.ts
 
 // --- Fonctions utilitaires pour localStorage ---
 
