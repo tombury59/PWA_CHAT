@@ -25,9 +25,9 @@ jobs:
 
         
           echo "DOMAIN_NAME=${{secrets.DOMAIN_NAME}}" > pwa_chat/.env
-          echo "ACME_EMAIL=${{ACME_EMAIL}}" >> pwa_chat/.env
-          echo "NEXT_PUBLIC_API_BASE_URL=${{NEXT_PUBLIC_API_BASE_URL}}" >> pwa_chat/.env
-          echo "NEXT_PUBLIC_API_IMAGES_URL=${{NEXT_PUBLIC_API_IMAGES_URL}}" >> pwa_chat/.env
-          echo "NEXT_PUBLIC_SOCKET_URL=${{NEXT_PUBLIC_SOCKET_URL}}" >> pwa_chat/.env
+          echo "ACME_EMAIL=${{secrets.ACME_EMAIL}}" >> pwa_chat/.env
+          echo "NEXT_PUBLIC_API_BASE_URL=${{secrets.NEXT_PUBLIC_API_BASE_URL}}" >> pwa_chat/.env
+          echo "NEXT_PUBLIC_API_IMAGES_URL=${{secrets.NEXT_PUBLIC_API_IMAGES_URL}}" >> pwa_chat/.env
+          echo "NEXT_PUBLIC_SOCKET_URL=${{secrets.NEXT_PUBLIC_SOCKET_URL}}" >> pwa_chat/.env
           
           docker compose up -d --build
