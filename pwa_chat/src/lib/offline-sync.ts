@@ -49,7 +49,7 @@ export async function clearSentMessages() {
 }
 
 
-// --- Implémentation pour mettre en cache les messages reçus ---
+// --- Implémentation pour mettre en cache les messages reçus ----
 
 export async function saveReceivedMessages(roomId: string, messages: any[]) {
     const messagesCache = getFromStorage<Record<string, any[]>>(MESSAGES_CACHE_KEY, {});
