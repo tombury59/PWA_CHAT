@@ -21,4 +21,5 @@ jobs:
         key: ${{ secrets.VPS_SSH_KEY }}
         port: 22
         script: |
+          cd /var/www/PWA_CHAT
           docker compose up -d --build
