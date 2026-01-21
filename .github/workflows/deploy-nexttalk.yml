@@ -30,4 +30,5 @@ jobs:
           echo "NEXT_PUBLIC_API_IMAGES_URL=${{secrets.NEXT_PUBLIC_API_IMAGES_URL}}" >> pwa_chat/.env
           echo "NEXT_PUBLIC_SOCKET_URL=${{secrets.NEXT_PUBLIC_SOCKET_URL}}" >> pwa_chat/.env
           
+          docker compose down
           docker compose up -d --build
